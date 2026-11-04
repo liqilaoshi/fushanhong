@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华文伴我行《远亲不如近邻》生词闯关大冒险</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 10px 30px -5px rgba(14, 116, 144, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+        }
+
+        .word-card-flip {
+            perspective: 1000px;
+        }
+
+        .word-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .word-card-flip.flipped .word-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .word-card-front, .word-card-back {
+            backface-visibility: hidden;
+        }
+
+        .word-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .float-anim {
+            animation: float-slow 3s infinite ease-in-out;
+        }
+
+        .btn-bounce:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- 顶部固定导航栏 / Navigation Header -->
+    <header class="bg-white/85 backdrop-blur-md border-b border-sky-100 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-teal-400 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-sky-200">
+                    <i class="fa-solid fa-house-chimney-window"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-slate-800 text-base sm:text-lg leading-tight">《远亲不如近邻》复习闯关</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">新加坡中三华文《华文伴我行》单元三</p>
+                </div>
+            </div>
+
+            <!-- 分数与得分榜 / Score Board -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full shadow-sm">
+                    <i class="fa-solid fa-star text-amber-500 animate-pulse"></i>
+                    <span id="global-score" class="font-extrabold text-amber-700 text-sm sm:text-base">0</span>
+                    <span class="text-xs text-amber-600 font-semibold">积分</span>
+                </div>
+                <button onclick="toggleVocabDrawer()" class="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-full text-xs sm:text-sm font-bold hover:bg-sky-100 transition btn-bounce">
+                    <i class="fa-solid fa-book"></i>
+                    <span class="hidden sm:inline">35生词表</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 关卡地图导航 / Level Map Navigator -->
+    <nav class="bg-sky-950/5 border-b border-sky-100 shadow-inner">
+        <div class="max-w-5xl mx-auto px-4 py-2.5">
+            <div class="flex justify-between items-center mb-1.5">
+                <span class="text-xs font-bold text-sky-900 uppercase tracking-wider" id="map-status-text">探险路线图</span>
+                <span class="text-xs font-semibold text-slate-500" id="progress-percent-text">进度: 0%</span>
+            </div>
+            <div class="grid grid-cols-6 gap-1.5 text-center">
+                <button onclick="switchLevel(1)" id="lvl-btn-1" class="level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-white border-sky-400 text-sky-700 shadow-sm">
+                    <i class="fa-solid fa-layer-group text-sm"></i>
+                    <span class="hidden md:inline">关卡1: 生词卡</span>
+                    <span class="md:hidden">1.识记</span>
+                </button>
+                <button onclick="switchLevel(2)" id="lvl-btn-2" class="level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-slate-100 border-slate-200 text-slate-400 opacity-60" disabled>
+                    <i class="fa-solid fa-pen-field text-sm"></i>
+                    <span class="hidden md:inline">关卡2: 句子填空</span>
+                    <span class="md:hidden">2.填空</span>
+                </button>
+                <button onclick="switchLevel(3)" id="lvl-btn-3" class="level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-slate-100 border-slate-200 text-slate-400 opacity-60" disabled>
+                    <i class="fa-solid fa-link text-sm"></i>
+                    <span class="hidden md:inline">关卡3: 词语搭配</span>
+                    <span class="md:hidden">3.搭配</span>
+                </button>
+                <button onclick="switchLevel(4)" id="lvl-btn-4" class="level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-slate-100 border-slate-200 text-slate-400 opacity-60" disabled>
+                    <i class="fa-solid fa-puzzle-piece text-sm"></i>
+                    <span class="hidden md:inline">关卡4: 连词成句</span>
+                    <span class="md:hidden">4.组句</span>
+                </button>
+                <button onclick="switchLevel(5)" id="lvl-btn-5" class="level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-slate-100 border-slate-200 text-slate-400 opacity-60" disabled>
+                    <i class="fa-solid fa-file-lines text-sm"></i>
+                    <span class="hidden md:inline">关卡5: 课文短文</span>
+                    <span class="md:hidden">5.短文</span>
+                </button>
+                <button onclick="switchLevel(6)" id="lvl-btn-6" class="level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-slate-100 border-slate-200 text-slate-400 opacity-60" disabled>
+                    <i class="fa-solid fa-book-open-reader text-sm"></i>
+                    <span class="hidden md:inline">关卡6: 阅读理解</span>
+                    <span class="md:hidden">6.阅读</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体互动区域 / Main Game Area -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+        <!-- 欢迎卡片 / Welcome View -->
+        <div id="game-welcome" class="glass-card rounded-3xl p-6 sm:p-10 text-center shadow-xl my-auto">
+            <div class="inline-block p-4 rounded-full bg-sky-100 text-sky-600 mb-4 float-anim">
+                <i class="fa-solid fa-people-roof text-4xl sm:text-5xl"></i>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mb-2">《远亲不如近邻》社区大冒险</h2>
+            <p class="text-slate-600 text-sm sm:text-base max-w-xl mx-auto mb-6 leading-relaxed">
+                全面掌握课本全部 <span class="font-extrabold text-sky-600">35个目标词语</span>！体验闪卡识记、句子填空、词语搭配、连词成句、课文复习与故事阅读六大关卡！
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="startQuest()" class="px-8 py-3.5 bg-gradient-to-r from-sky-500 to-teal-500 hover:from-sky-600 hover:to-teal-600 text-white font-extrabold rounded-2xl shadow-lg shadow-sky-200 transition text-base sm:text-lg flex items-center gap-2 btn-bounce">
+                    <i class="fa-solid fa-play"></i> 开启第1关学习
+                </button>
+            </div>
+        </div>
+
+        <!-- LEVEL 1: 词语识记与复习卡 (Vocabulary Master) -->
+        <div id="level-1-container" class="level-container hidden">
+            <div class="glass-card rounded-3xl p-5 sm:p-8 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase">第1关 · 词语识记与复习闪卡</span>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 mt-1">熟悉全部 35 个词语（点击卡片翻面）</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="l1-mastered-count" class="text-xs font-bold bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full border border-teal-200">已掌握: 0 / 35</span>
+                    </div>
+                </div>
+
+                <!-- 过滤器与搜索 / Filter Bar -->
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="l1-search" oninput="filterL1Cards()" placeholder="搜索词语或拼音..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-400">
+                </div>
+
+                <!-- 闪卡网格 / Cards Grid -->
+                <div id="l1-card-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[50vh] overflow-y-auto custom-scrollbar p-1">
+                    <!-- Flashcards generated via JS -->
+                </div>
+
+                <!-- 解锁下一关按钮 -->
+                <div class="mt-6 flex justify-between items-center pt-4 border-t border-slate-100">
+                    <button onclick="markAllL1Mastered()" class="text-xs font-bold text-sky-600 hover:text-sky-800 underline">一键标记全掌握</button>
+                    <button id="l1-next-btn" onclick="finishL1()" class="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition btn-bounce">
+                        进入第2关：句子填空 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 2: 选词填空关 (Sentence Completion) -->
+        <div id="level-2-container" class="level-container hidden">
+            <div class="glass-card rounded-3xl p-5 sm:p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase">第2关 · 选词填空挑战</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">从35个生词中选择最恰当的填入句子</h2>
+                    </div>
+                    <span id="l2-progress" class="text-sm font-bold text-sky-600">问题 1 / 10</span>
+                </div>
+
+                <div class="bg-gradient-to-r from-sky-50 to-indigo-50 rounded-2xl p-6 mb-6 border border-sky-100 shadow-inner">
+                    <p class="text-xs text-sky-600 font-bold uppercase mb-2">题目：</p>
+                    <p id="l2-sentence-text" class="text-lg sm:text-xl font-bold text-slate-800 leading-relaxed">--</p>
+                </div>
+
+                <!-- 选项区域 -->
+                <div id="l2-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <!-- Options populated via JS -->
+                </div>
+
+                <div id="l2-feedback" class="hidden p-4 rounded-xl text-center font-bold mb-4"></div>
+
+                <div class="flex justify-end">
+                    <button id="l2-next-btn" onclick="nextL2Question()" class="hidden px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition btn-bounce">
+                        下一题 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 3: 词语搭配关 (Collocation Matching) -->
+        <div id="level-3-container" class="level-container hidden">
+            <div class="glass-card rounded-3xl p-5 sm:p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase">第3关 · 词语搭配配对</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">点击选择左侧词语，再点击右侧对应的常用搭配</h2>
+                    </div>
+                    <span id="l3-score-counter" class="text-sm font-bold text-sky-600">已匹配: 0 / 10</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">核心词语 (Words)</h4>
+                        <div id="l3-source-list" class="space-y-2">
+                            <!-- JS populated -->
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">搭配对象 (Collocations)</h4>
+                        <div id="l3-target-list" class="space-y-2">
+                            <!-- JS populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="l3-feedback" class="hidden p-4 rounded-xl text-center font-bold mb-4"></div>
+
+                <div class="flex justify-between items-center">
+                    <button onclick="initLevel3()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50">重置配对</button>
+                    <button id="l3-submit-btn" onclick="checkL3Completion()" class="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition btn-bounce">
+                        验证配对 <i class="fa-solid fa-check ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 4: 连词成句关 (Sentence Unscramble) -->
+        <div id="level-4-container" class="level-container hidden">
+            <div class="glass-card rounded-3xl p-5 sm:p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase">第4关 · 连词成句练习</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">重组词块，组合成语意通顺的句子</h2>
+                    </div>
+                    <span id="l4-progress" class="text-sm font-bold text-sky-600">句子 1 / 10</span>
+                </div>
+
+                <!-- 组合结果区域 -->
+                <div class="mb-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase mb-2 block">排列后的句子：</span>
+                    <div id="l4-answer-zone" class="min-h-[70px] bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-3 flex flex-wrap gap-2 items-center">
+                        <span class="text-slate-400 text-sm italic w-full text-center">点击下方的词语添加到此处...</span>
+                    </div>
+                </div>
+
+                <!-- 待选词块区 -->
+                <div class="mb-6">
+                    <span class="text-xs font-bold text-slate-400 uppercase mb-2 block">备选词块：</span>
+                    <div id="l4-pool-zone" class="flex flex-wrap gap-2 p-3 bg-white rounded-2xl border border-slate-100 shadow-inner">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <div id="l4-feedback" class="hidden p-4 rounded-xl text-center font-bold mb-4"></div>
+
+                <div class="flex justify-between items-center">
+                    <button onclick="resetL4Current()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50">重置句子</button>
+                    <button id="l4-check-btn" onclick="checkL4Answer()" class="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition btn-bounce">
+                        提交答案 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 5: 课文《远亲不如近邻》短文填空关 (Passage Cloze) -->
+        <div id="level-5-container" class="level-container hidden">
+            <div class="glass-card rounded-3xl p-5 sm:p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase">第5关 · 课文《远亲不如近邻》节选填空</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">根据课文语境，选择最恰当的生词</h2>
+                    </div>
+                    <span class="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">课文复习</span>
+                </div>
+
+                <!-- 词库 Bank -->
+                <div class="mb-4 bg-sky-50/80 border border-sky-100 rounded-2xl p-3">
+                    <span class="text-xs font-bold text-sky-800 uppercase block mb-2">生词备选库：</span>
+                    <div id="l5-word-bank" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 课文填空内容 -->
+                <div id="l5-passage" class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 text-slate-800 leading-relaxed text-base space-y-4 mb-6 shadow-inner max-h-[45vh] overflow-y-auto custom-scrollbar">
+                    <!-- Passage with selects populated by JS -->
+                </div>
+
+                <div id="l5-feedback" class="hidden p-4 rounded-xl text-center font-bold mb-4"></div>
+
+                <div class="flex justify-between items-center">
+                    <button onclick="resetL5()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50">清空填空</button>
+                    <button id="l5-submit-btn" onclick="checkL5Answers()" class="px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition btn-bounce">
+                        验证课文填空 <i class="fa-solid fa-paper-plane ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 6: 重点词语阅读理解与故事关 (Reading Comprehension Quest) -->
+        <div id="level-6-container" class="level-container hidden">
+            <div class="glass-card rounded-3xl p-5 sm:p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase">第6关 · 故事阅读与深度理解</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 mt-1">阅读原创社区故事，回答理解题</h2>
+                    </div>
+                    <span id="l6-progress" class="text-sm font-bold text-sky-600">问题 1 / 5</span>
+                </div>
+
+                <!-- 原创故事内容 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 mb-6 text-slate-700 text-sm sm:text-base leading-relaxed max-h-48 overflow-y-auto custom-scrollbar">
+                    <p class="font-extrabold text-sky-900 mb-2 text-center text-lg">《淡滨尼社区的暖心时刻》</p>
+                    <p class="indent-8 mb-2">
+                        居住在<b>淡滨尼</b>的林<b>女士</b>平日里十分关爱<b>左邻右舍</b>。邻居陈老伯身体不好，林女士经常帮忙<b>照料盆栽</b>并打扫走廊，大家相处得十分<b>和睦</b>。
+                    </p>
+                    <p class="indent-8 mb-2">
+                        不料上个月，隔壁不幸发生<b>失火</b>事故。面对突如其来的<b>火患</b>，林女士没有选择<b>冷漠</b>旁观，而是果断伸出<b>援手</b>，协助陈老伯<b>逃生</b>。不仅如此，她还主动<b>腾出</b>家里的房间让老伯<b>暂住</b>，并发动居民<b>慷慨解囊</b><b>捐出</b>生活用品。
+                    </p>
+                    <p class="indent-8 mb-2">
+                        陈老伯感动地说：“<b>俗话</b>说得好，‘远亲<b>不如</b>近邻’！林女士的<b>雪中送炭</b>不仅帮我<b>渡</b>过了难关，更让我感受到<b>邻里</b>间最真实、最深厚的<b>温度</b>。”
+                    </p>
+                </div>
+
+                <!-- 题目与选项 -->
+                <div class="space-y-4 mb-6">
+                    <h3 id="l6-question-text" class="font-bold text-slate-800 text-base">--</h3>
+                    <div id="l6-options-container" class="space-y-2">
+                        <!-- Options generated by JS -->
+                    </div>
+                </div>
+
+                <div id="l6-feedback" class="hidden p-4 rounded-xl text-center font-bold mb-4"></div>
+
+                <div class="flex justify-end">
+                    <button id="l6-next-btn" onclick="nextL6Question()" class="hidden px-6 py-2.5 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition btn-bounce">
+                        下一题 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 胜利结算弹窗 / Full Quest Completion Modal -->
+        <div id="victory-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl">
+                <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner float-anim">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 mb-1">大获全胜！通关成功！</h2>
+                <p class="text-slate-500 text-sm mb-4">你已圆满完成《远亲不如近邻》全部6个闯关任务！</p>
+                
+                <div class="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-600 text-sm">最终总得分：</span>
+                        <span id="final-score" class="text-3xl font-black text-amber-500">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-600 text-sm">荣获头衔：</span>
+                        <span class="text-sm font-bold text-sky-700 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">社区和睦文化大使</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="restartFullGame()" class="flex-1 py-3 bg-sky-600 text-white font-bold rounded-xl hover:bg-sky-700 transition btn-bounce">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 再次挑战
+                    </button>
+                    <button onclick="toggleVocabDrawer()" class="flex-1 py-3 border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition btn-bounce">
+                        <i class="fa-solid fa-book mr-1"></i> 查看词汇
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 35生词抽屉 Modal -->
+    <div id="vocab-drawer" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-sky-600 to-teal-600 text-white">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-xl"></i>
+                    <h3 class="font-bold text-lg">《远亲不如近邻》35个生词总表</h3>
+                </div>
+                <button onclick="toggleVocabDrawer()" class="text-white/80 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-3" id="vocab-drawer-list">
+                <!-- Word list generated via JS -->
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 text-right">
+                <button onclick="toggleVocabDrawer()" class="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white/60 border-t border-slate-200/60 py-3 text-center text-xs text-slate-400 mt-auto">
+        新加坡中学中三华文 《华文伴我行》 单元三《远亲不如近邻》交互复习应用
+    </footer>
+
+    <!-- JavaScript 逻辑与游戏核心架构 -->
+    <script>
+        // 1. 完整35个目标生词表数据
+        const vocabulary35 = [
+            { id: 1, word: "邻里", pinyin: "lín lǐ", def: "邻居关系", eng: "neighborhood", sentence: "邻里间的帮助真是太温暖了！" },
+            { id: 2, word: "不如", pinyin: "bù rú", def: "比不上", eng: "not as good as", sentence: "这家餐厅的菜不如那家好吃。" },
+            { id: 3, word: "俗话", pinyin: "sú huà", def: "常用的话", eng: "saying", sentence: "你知道这句俗话的意思吗？" },
+            { id: 4, word: "援手", pinyin: "yuán shǒu", def: "伸手帮助", eng: "helping hand", sentence: "真是太感谢你的援手了！" },
+            { id: 5, word: "裕廊东", pinyin: "yù láng dōng", def: "地名（新加坡）", eng: "Jurong East", sentence: "我没去过裕廊东，听说那里很美。" },
+            { id: 6, word: "火患", pinyin: "huǒ huàn", def: "火灾隐患", eng: "fire hazard", sentence: "老化的电线是常见的火患之一。" },
+            { id: 7, word: "失火", pinyin: "shī huǒ", def: "着火", eng: "catch fire", sentence: "他们家昨天失火了，损失很大。" },
+            { id: 8, word: "女士", pinyin: "nǚ shì", def: "女性称呼", eng: "lady", sentence: "他不是女士，而是男士。" },
+            { id: 9, word: "侥幸", pinyin: "jiǎo xìng", def: "运气好、凭运气避开灾难", eng: "lucky", sentence: "他是不是侥幸赢了这次比赛？" },
+            { id: 10, word: "逃生", pinyin: "táo shēng", def: "逃离危险", eng: "escape", sentence: "真幸运，我们最终成功逃生了！" },
+            { id: 11, word: "腾出", pinyin: "téng chū", def: "空出时间或空间", eng: "make space for", sentence: "你能腾出一点时间来帮我吗？" },
+            { id: 12, word: "暂住", pinyin: "zàn zhù", def: "暂时居住", eng: "live temporarily", sentence: "你打算在这里暂住多久？" },
+            { id: 13, word: "慷慨解囊", pinyin: "kāng kǎi jiě náng", def: "乐于助人、大方捐助", eng: "donate generously", sentence: "他的慷慨解囊真正让人感动！" },
+            { id: 14, word: "捐出", pinyin: "juān chū", def: "捐赠、把物品捐给他人", eng: "donate", sentence: "你打算把这些书捐出吗？" },
+            { id: 15, word: "由此", pinyin: "yóu cǐ", def: "从这个、由此可见", eng: "from this", sentence: "由此可见，他确实非常有才华。" },
+            { id: 16, word: "渡", pinyin: "dù", def: "跨越困难（渡过难关）", eng: "overcome", sentence: "你一定能渡过这个难关！" },
+            { id: 17, word: "点点滴滴", pinyin: "diǎn diǎn dī dī", def: "许多小事", eng: "bits and pieces", sentence: "这些点点滴滴我都会记得。" },
+            { id: 18, word: "淡滨尼", pinyin: "dàn bīn ní", def: "地名（新加坡）", eng: "Tampines", sentence: "下次我们去淡滨尼玩吧！" },
+            { id: 19, word: "营造", pinyin: "yíng zào", def: "建设、打造（气氛或环境）", eng: "create", sentence: "我们在营造一个美好的校园。" },
+            { id: 20, word: "喜庆", pinyin: "xǐ qìng", def: "值得庆祝的", eng: "joyous, jubilant", sentence: "哇，今天真是个喜庆的日子！" },
+            { id: 21, word: "佳节气氛", pinyin: "jiā jié qì fēn", def: "节日的氛围", eng: "festive atmosphere", sentence: "这真是个充满佳节气氛的夜晚！" },
+            { id: 22, word: "顾及", pinyin: "gù jí", def: "照顾到、考虑到", eng: "take into account", sentence: "你能顾及到大家的意见吗？" },
+            { id: 23, word: "幸好", pinyin: "xìng hǎo", def: "幸运、好在", eng: "fortunately", sentence: "幸好我及时赶到，没错过飞机。" },
+            { id: 24, word: "左邻右舍", pinyin: "zuǒ lín yòu shè", def: "邻居", eng: "neighbors", sentence: "我常常和左邻右舍打招呼。" },
+            { id: 25, word: "雪中送炭", pinyin: "xuě zhōng sòng tàn", def: "在人困难时及时给予帮助", eng: "help in need", sentence: "你的支持对我来说是雪中送炭。" },
+            { id: 26, word: "照料盆栽", pinyin: "zhào liào pén zāi", def: "养护植物", eng: "take care of plants", sentence: "请你照料盆栽，别忘记浇水！" },
+            { id: 27, word: "疏解", pinyin: "shū jiě", def: "缓解压力或情绪", eng: "relieve", sentence: "和朋友聊天能疏解我的不安。" },
+            { id: 28, word: "不管...还是", pinyin: "bù guǎn... hái shì", def: "表示结果相同", eng: "no matter... or...", sentence: "不管你来还是不来，我都会等。" },
+            { id: 29, word: "和睦", pinyin: "hé mù", def: "关系好、融洽相处", eng: "harmonious", sentence: "请你们保持和睦，不要争吵。" },
+            { id: 30, word: "舒心", pinyin: "shū xīn", def: "内心轻松愉快", eng: "relaxed", sentence: "休息一下，让自己舒心点！" },
+            { id: 31, word: "冷漠", pinyin: "lěng mò", def: "缺乏热情、态度冷淡", eng: "indifferent", sentence: "她并不冷漠，总是关心别人。" },
+            { id: 32, word: "挑剔", pinyin: "tiāo ti", def: "过于讲究、求全责备", eng: "picky", sentence: "别那么挑剔，没什么完美的。" },
+            { id: 33, word: "礼让", pinyin: "lǐ ràng", def: "讲究礼貌并让给别人", eng: "be courteous", sentence: "他一点也不懂得礼让，总是抢先。" },
+            { id: 34, word: "计较", pinyin: "jì jiào", def: "斤斤计较、在意小事", eng: "argue over", sentence: "我们别再计较这些小事了。" },
+            { id: 35, word: "胜似", pinyin: "shèng sì", def: "更胜于、强过", eng: "better than", sentence: "邻里间的情谊胜似亲人。" }
+        ];
+
+        // 2. 词语搭配数据 (10组)
+        const collocationData = [
+            { word: "营造", target: "佳节气氛", full: "营造佳节气氛" },
+            { word: "照料", target: "走廊上的盆栽", full: "照料盆栽" },
+            { word: "疏解", target: "工作上的压力", full: "疏解压力" },
+            { word: "慷慨", target: "解囊相助", full: "慷慨解囊" },
+            { word: "渡过", target: "生活中的难关", full: "渡过难关" },
+            { word: "维持", target: "和睦的邻里关系", full: "维持和睦" },
+            { word: "感到", target: "非常舒心与愉快", full: "感到舒心" },
+            { word: "互相", target: "礼让与尊重", full: "互相礼让" },
+            { word: "过于", target: "挑剔生活琐事", full: "过于挑剔" },
+            { word: "斤斤", target: "计较小利益", full: "斤斤计较" }
+        ];
+
+        // 3. 连词成句数据 (10组)
+        const sentenceUnscrambleData = [
+            {
+                correct: ["俗话说", "远亲", "不如", "近邻"],
+                words: ["近邻", "俗话说", "不如", "远亲"]
+            },
+            {
+                correct: ["林女士", "伸出援手", "帮助了", "左邻右舍"],
+                words: ["左邻右舍", "林女士", "帮助了", "伸出援手"]
+            },
+            {
+                correct: ["大家", "慷慨解囊", "帮助", "灾民", "渡过难关"],
+                words: ["渡过难关", "帮助", "慷慨解囊", "灾民", "大家"]
+            },
+            {
+                correct: ["我们在", "淡滨尼", "营造了", "浓厚的", "佳节气氛"],
+                words: ["佳节气氛", "淡滨尼", "我们在", "浓厚的", "营造了"]
+            },
+            {
+                correct: ["幸好", "邻居", "及时报警", "大家", "才成功逃生"],
+                words: ["才成功逃生", "及时报警", "幸好", "大家", "邻居"]
+            },
+            {
+                correct: ["邻里之间", "应该", "互相礼让", "不应该", "斤斤计较"],
+                words: ["不应该", "应该", "斤斤计较", "邻里之间", "互相礼让"]
+            },
+            {
+                correct: ["他", "腾出了", "客房", "让邻居", "暂时居住"],
+                words: ["暂时居住", "客房", "他", "让邻居", "腾出了"]
+            },
+            {
+                correct: ["不管", "遇到什么困难", "还是", "要保持乐观"],
+                words: ["还是要", "遇到什么困难", "不管", "保持乐观"]
+            },
+            {
+                correct: ["邻居的", "雪中送炭", "让大家", "感到非常", "舒心"],
+                words: ["让大家", "雪中送炭", "舒心", "邻居的", "感到非常"]
+            },
+            {
+                correct: ["我们", "不要", "对周围的", "邻居", "过于冷漠"],
+                words: ["邻居", "过于冷漠", "我们", "不要", "对周围的"]
+            }
+        ];
+
+        // 4. 课文《远亲不如近邻》节选填空数据
+        const passageClozeData = {
+            segments: [
+                "在新加坡的",
+                { key: "1", ans: "邻里" },
+                "社区中，大家都熟悉一句",
+                { key: "2", ans: "俗话" },
+                "：“远亲",
+                { key: "3", ans: "不如" },
+                "近邻”。上个月，在",
+                { key: "4", ans: "裕廊东" },
+                "的一栋组屋不幸发生",
+                { key: "5", ans: "失火" },
+                "事故。面对危险的",
+                { key: "6", ans: "火患" },
+                "，幸好有勇敢的邻居及时伸出",
+                { key: "7", ans: "援手" },
+                "，帮助居民顺利",
+                { key: "8", ans: "逃生" },
+                "。事后，大家更是",
+                { key: "9", ans: "慷慨解囊" },
+                "，积极",
+                { key: "10", ans: "捐出" },
+                "物资，帮助受灾家庭",
+                { key: "11", ans: "渡" },
+                "过难关。这种",
+                { key: "12", ans: "雪中送炭" },
+                "的精神，真正体现了邻里间",
+                { key: "13", ans: "和睦" },
+                "相处的美好温度。"
+            ],
+            bank: ["邻里", "俗话", "不如", "裕廊东", "失火", "火患", "援手", "逃生", "慷慨解囊", "捐出", "渡", "雪中送炭", "和睦", "冷漠", "挑剔"]
+        };
+
+        // 5. 第6关阅读理解题目
+        const readingQuestionsData = [
+            {
+                q: "1. 故事中，林女士平日里是如何对待左邻右舍的？",
+                options: [
+                    "A. 态度极其冷漠，从不与大家说话",
+                    "B. 经常帮忙照料盆栽、打扫走廊，相处十分和睦",
+                    "C. 总是对邻居的生活琐事斤斤计较",
+                    "D. 经常向邻居收取打扫费用"
+                ],
+                answer: 1,
+                explanation: "文章第一段提到：‘林女士平日里十分关爱左邻右舍...经常帮忙照料盆栽并打扫走廊，大家相处得十分和睦。’"
+            },
+            {
+                q: "2. 当隔壁不幸发生失火事故时，林女士采取了怎样的行动？",
+                options: [
+                    "A. 只是在旁边拍照",
+                    "B. 迅速收拾自己的行李搬走",
+                    "C. 果断伸手协助陈老伯逃生，并腾出房间让他暂住",
+                    "D. 抱怨火患影响了自己的日常生活"
+                ],
+                answer: 2,
+                explanation: "文章第二段明确说明：‘林女士...果断伸出援手，协助陈老伯逃生...腾出家里的房间让老伯暂住’。"
+            },
+            {
+                q: "3. 词语“雪中送炭”在文中的具体含义是：",
+                options: [
+                    "A. 在下雪天给陈老伯送去烤火的木炭",
+                    "B. 在陈老伯困难无助时及时给予无私的帮助与关怀",
+                    "C. 帮邻居购买便宜的煤炭",
+                    "D. 劝陈老伯在冬天的雪夜里搬家"
+                ],
+                answer: 1,
+                explanation: "成语‘雪中送炭’比喻在别人最急需、最困难的时候给予及时的物质或精神帮助。"
+            },
+            {
+                q: "4. 陈老伯为什么感叹“远亲不如近邻”？",
+                options: [
+                    "A. 因为他的远方亲戚非常冷漠",
+                    "B. 因为邻居林女士在危机时刻比远亲更能及时给予贴心关怀",
+                    "C. 因为淡滨尼的房租比别的地方便宜",
+                    "D. 因为他不喜欢自己的远方亲戚"
+                ],
+                answer: 1,
+                explanation: "陈老伯遭遇火患难关时，左邻右舍的及时援手和照顾解决了实际困难，切身体会到近邻的重要性。"
+            },
+            {
+                q: "5. 这篇短文主要想要向读者传达什么核心价值观？",
+                options: [
+                    "A. 在组屋里种盆栽必须每天浇水",
+                    "B. 新加坡淡滨尼是个非常繁华的地区",
+                    "C. 倡导邻里互助、关爱包容与和睦相处的温暖精神",
+                    "D. 遇到火患时要学会独立逃生"
+                ],
+                answer: 2,
+                explanation: "整篇文章通过林女士和社区邻里的暖心感人事迹，弘扬了和谐邻里、及时互助的价值观。"
+            }
+        ];
+
+        // 游戏全局状态变量
+        let globalScore = 0;
+        let unlockedLevels = [1];
+        let currentLevel = 1;
+
+        // Level 1 状态
+        let l1MasteredSet = new Set();
+
+        // Level 2 状态
+        let l2Questions = [];
+        let l2CurrentIdx = 0;
+
+        // Level 3 状态
+        let l3SelectedSource = null;
+        let l3Matches = {};
+
+        // Level 4 状态
+        let l4CurrentIdx = 0;
+        let l4UserWords = [];
+
+        // Level 6 状态
+        let l6CurrentIdx = 0;
+
+        // Web Audio API 声音效果
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                    osc.frequency.setValueAtTime(174.61, audioCtx.currentTime + 0.15); // F3
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                }
+            } catch (e) {
+                // Ignore audio restriction if user hasn't interacted
+            }
+        }
+
+        // Web Speech API 朗读语音
+        function speakWord(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 增加得分
+        function addScore(pts) {
+            globalScore += pts;
+            document.getElementById('global-score').innerText = globalScore;
+        }
+
+        window.onload = function() {
+            renderVocabDrawerList();
+        };
+
+        function startQuest() {
+            switchLevel(1);
+        }
+
+        // 打开/关闭词汇抽屉
+        function toggleVocabDrawer() {
+            document.getElementById('vocab-drawer').classList.toggle('hidden');
+        }
+
+        function renderVocabDrawerList() {
+            const container = document.getElementById('vocab-drawer-list');
+            container.innerHTML = vocabulary35.map(item => `
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between hover:bg-sky-50 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 font-bold text-xs flex items-center justify-center">${item.id}</span>
+                        <div>
+                            <div class="flex items-baseline gap-2">
+                                <span class="font-black text-slate-800 text-base">${item.word}</span>
+                                <span class="text-xs font-semibold text-sky-600">${item.pinyin}</span>
+                            </div>
+                            <p class="text-xs text-slate-500">${item.def} <span class="text-slate-400">(${item.eng})</span></p>
+                        </div>
+                    </div>
+                    <button onclick="speakWord('${item.word}')" class="text-slate-400 hover:text-sky-600 p-2 text-sm">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 关卡切换器
+        function switchLevel(lvl) {
+            if (!unlockedLevels.includes(lvl)) return;
+            currentLevel = lvl;
+
+            document.querySelectorAll('.level-container').forEach(el => el.classList.add('hidden'));
+            document.getElementById('game-welcome').classList.add('hidden');
+
+            for (let i = 1; i <= 6; i++) {
+                const btn = document.getElementById(`lvl-btn-${i}`);
+                if (i === lvl) {
+                    btn.className = "level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-white border-sky-400 text-sky-700 shadow-sm scale-105 z-10";
+                } else if (unlockedLevels.includes(i)) {
+                    btn.className = "level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-sky-50 border-sky-200 text-sky-800 hover:bg-sky-100";
+                } else {
+                    btn.className = "level-tab-btn py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center gap-1 bg-slate-100 border-slate-200 text-slate-400 opacity-60";
+                }
+            }
+
+            document.getElementById(`level-${lvl}-container`).classList.remove('hidden');
+
+            if (lvl === 1) initLevel1();
+            if (lvl === 2) initLevel2();
+            if (lvl === 3) initLevel3();
+            if (lvl === 4) initLevel4();
+            if (lvl === 5) initLevel5();
+            if (lvl === 6) initLevel6();
+
+            updateProgressMap();
+        }
+
+        function unlockLevel(lvl) {
+            if (!unlockedLevels.includes(lvl)) {
+                unlockedLevels.push(lvl);
+                const btn = document.getElementById(`lvl-btn-${lvl}`);
+                btn.removeAttribute('disabled');
+            }
+            updateProgressMap();
+        }
+
+        function updateProgressMap() {
+            const percent = Math.round(((unlockedLevels.length - 1) / 5) * 100);
+            document.getElementById('progress-percent-text').innerText = `进度: ${percent}%`;
+        }
+
+        // ================= LEVEL 1: 生词闪卡 =================
+        function initLevel1() {
+            renderL1Grid(vocabulary35);
+        }
+
+        function renderL1Grid(list) {
+            const grid = document.getElementById('l1-card-grid');
+            grid.innerHTML = list.map(item => {
+                const isMastered = l1MasteredSet.has(item.id);
+                return `
+                <div class="word-card-flip h-36 cursor-pointer" onclick="flipCard(this)">
+                    <div class="word-card-inner relative w-full h-full rounded-2xl shadow-sm transition-all duration-300">
+                        <!-- Front -->
+                        <div class="word-card-front absolute inset-0 bg-white border border-slate-200 rounded-2xl p-3 flex flex-col justify-between items-center text-center">
+                            <div class="w-full flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-400">#${item.id}</span>
+                                <button onclick="event.stopPropagation(); toggleL1Mastered(${item.id})" class="text-sm ${isMastered ? 'text-teal-500' : 'text-slate-300 hover:text-teal-400'}">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </button>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-black text-slate-800 tracking-wide">${item.word}</h3>
+                                <p class="text-xs text-sky-600 font-semibold">${item.pinyin}</p>
+                            </div>
+                            <div class="w-full flex justify-between items-center text-[10px] text-slate-400">
+                                <span>点击看解释</span>
+                                <button onclick="event.stopPropagation(); speakWord('${item.word}')" class="text-sky-600 p-1 text-xs">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Back -->
+                        <div class="word-card-back absolute inset-0 bg-gradient-to-br from-sky-500 to-teal-500 text-white border border-sky-400 rounded-2xl p-3 flex flex-col justify-between text-left">
+                            <div>
+                                <span class="text-xs font-bold text-sky-100 block mb-1">【含义】${item.def}</span>
+                                <p class="text-[11px] text-sky-100 italic mb-1">(${item.eng})</p>
+                                <p class="text-[11px] text-white font-medium line-clamp-2">“${item.sentence}”</p>
+                            </div>
+                            <span class="text-[10px] text-sky-200 text-right">点击翻回正面</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            document.getElementById('l1-mastered-count').innerText = `已掌握: ${l1MasteredSet.size} / 35`;
+        }
+
+        function flipCard(el) {
+            el.classList.toggle('flipped');
+        }
+
+        function toggleL1Mastered(id) {
+            if (l1MasteredSet.has(id)) {
+                l1MasteredSet.delete(id);
+            } else {
+                l1MasteredSet.add(id);
+                playSound('correct');
+            }
+            filterL1Cards();
+        }
+
+        function filterL1Cards() {
+            const query = document.getElementById('l1-search').value.trim().toLowerCase();
+            const filtered = vocabulary35.filter(v => v.word.includes(query) || v.pinyin.toLowerCase().includes(query));
+            renderL1Grid(filtered);
+        }
+
+        function markAllL1Mastered() {
+            vocabulary35.forEach(v => l1MasteredSet.add(v.id));
+            filterL1Cards();
+        }
+
+        function finishL1() {
+            if (l1MasteredSet.size < 10) {
+                if (!confirm("建议至少标记10个已掌握生词。确定要直接进入第二关吗？")) return;
+            }
+            addScore(20);
+            unlockLevel(2);
+            showLevelPassedNotice(1, 2);
+        }
+
+        // ================= LEVEL 2: 选词填空关 =================
+        function initLevel2() {
+            l2CurrentIdx = 0;
+            // 从 35 个词汇中随机挑 10 个生成题目
+            const shuffled = [...vocabulary35].sort(() => 0.5 - Math.random()).slice(0, 10);
+            l2Questions = shuffled.map(target => {
+                // 用下划线替代例句中的词汇
+                const sentence = target.sentence.replace(target.word, "（ ____ ）");
+                // 干扰项
+                const wrongOptions = vocabulary35.filter(v => v.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+                const options = [target, ...wrongOptions].sort(() => 0.5 - Math.random());
+                return { target, sentence, options };
+            });
+
+            loadL2Question();
+        }
+
+        function loadL2Question() {
+            const q = l2Questions[l2CurrentIdx];
+            document.getElementById('l2-progress').innerText = `问题 ${l2CurrentIdx + 1} / ${l2Questions.length}`;
+            document.getElementById('l2-sentence-text').innerText = q.sentence;
+            document.getElementById('l2-feedback').className = "hidden";
+            document.getElementById('l2-next-btn').classList.add('hidden');
+
+            const container = document.getElementById('l2-options');
+            container.innerHTML = q.options.map(opt => `
+                <button onclick="checkL2Answer(this, ${opt.id === q.target.id})" class="l2-opt-btn p-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-800 hover:border-sky-400 hover:bg-sky-50 transition text-left flex flex-col justify-center shadow-sm btn-bounce">
+                    <span class="text-lg mb-0.5">${opt.word}</span>
+                    <span class="text-xs text-slate-400 font-normal">${opt.pinyin} · ${opt.def}</span>
+                </button>
+            `).join('');
+        }
+
+        function checkL2Answer(btn, isCorrect) {
+            document.querySelectorAll('.l2-opt-btn').forEach(b => b.onclick = null);
+
+            const q = l2Questions[l2CurrentIdx];
+            const feedback = document.getElementById('l2-feedback');
+            feedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSound('correct');
+                btn.classList.add('bg-teal-500', 'text-white', 'border-teal-600');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-teal-100 text-teal-800 border border-teal-300";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> 答对了！加 10 分！`;
+                addScore(10);
+            } else {
+                playSound('wrong');
+                btn.classList.add('bg-rose-500', 'text-white', 'border-rose-600');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-rose-100 text-rose-800 border border-rose-300";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> 答错了！正确答案是：【${q.target.word}】 (${q.target.pinyin})`;
+            }
+
+            document.getElementById('l2-next-btn').classList.remove('hidden');
+        }
+
+        function nextL2Question() {
+            l2CurrentIdx++;
+            if (l2CurrentIdx < l2Questions.length) {
+                loadL2Question();
+            } else {
+                unlockLevel(3);
+                showLevelPassedNotice(2, 3);
+            }
+        }
+
+        // ================= LEVEL 3: 词语搭配关 =================
+        function initLevel3() {
+            l3SelectedSource = null;
+            l3Matches = {};
+            document.getElementById('l3-feedback').className = "hidden";
+
+            const sources = [...collocationData].sort(() => 0.5 - Math.random());
+            const targets = [...collocationData].sort(() => 0.5 - Math.random());
+
+            document.getElementById('l3-source-list').innerHTML = sources.map(item => `
+                <div onclick="selectL3Source('${item.word}')" id="l3-src-${item.word}" class="p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 shadow-sm hover:border-sky-400 flex justify-between items-center transition cursor-pointer">
+                    <span>${item.word}</span>
+                    <i id="l3-icon-${item.word}" class="fa-regular fa-circle text-slate-300"></i>
+                </div>
+            `).join('');
+
+            document.getElementById('l3-target-list').innerHTML = targets.map(item => `
+                <div onclick="pairL3Target('${item.target}')" id="l3-tgt-${item.target.replace(/\s+/g, '')}" class="p-3 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl font-medium text-slate-700 flex justify-between items-center transition cursor-pointer">
+                    <span id="l3-tgt-text-${item.target.replace(/\s+/g, '')}">... ${item.target}</span>
+                    <span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md" id="l3-tgt-badge-${item.target.replace(/\s+/g, '')}">待对齐</span>
+                </div>
+            `).join('');
+
+            updateL3Counter();
+        }
+
+        function selectL3Source(word) {
+            l3SelectedSource = word;
+            document.querySelectorAll('#l3-source-list > div').forEach(el => el.classList.remove('ring-2', 'ring-sky-500', 'bg-sky-50'));
+            const selEl = document.getElementById(`l3-src-${word}`);
+            if (selEl) selEl.classList.add('ring-2', 'ring-sky-500', 'bg-sky-50');
+        }
+
+        function pairL3Target(targetText) {
+            if (!l3SelectedSource) {
+                alert("请先点击左侧的词语！");
+                return;
+            }
+
+            const cleanId = targetText.replace(/\s+/g, '');
+            l3Matches[l3SelectedSource] = targetText;
+
+            const targetEl = document.getElementById(`l3-tgt-${cleanId}`);
+            targetEl.classList.remove('border-dashed', 'bg-slate-50');
+            targetEl.classList.add('border-solid', 'border-sky-400', 'bg-sky-50');
+
+            document.getElementById(`l3-tgt-text-${cleanId}`).innerHTML = `<strong class="text-sky-800">${l3SelectedSource}</strong> + ${targetText}`;
+            document.getElementById(`l3-tgt-badge-${cleanId}`).innerText = "已配对";
+            document.getElementById(`l3-tgt-badge-${cleanId}`).className = "text-xs bg-sky-200 text-sky-800 px-2 py-0.5 rounded-md font-bold";
+
+            document.getElementById(`l3-icon-${l3SelectedSource}`).className = "fa-solid fa-circle-check text-sky-500";
+
+            l3SelectedSource = null;
+            document.querySelectorAll('#l3-source-list > div').forEach(el => el.classList.remove('ring-2', 'ring-sky-500', 'bg-sky-50'));
+
+            updateL3Counter();
+        }
+
+        function updateL3Counter() {
+            const count = Object.keys(l3Matches).length;
+            document.getElementById('l3-score-counter').innerText = `已匹配: ${count} / ${collocationData.length}`;
+        }
+
+        function checkL3Completion() {
+            if (Object.keys(l3Matches).length < collocationData.length) {
+                alert("请先将所有 10 组词语完成匹配！");
+                return;
+            }
+
+            let correct = 0;
+            collocationData.forEach(pair => {
+                if (l3Matches[pair.word] === pair.target) correct++;
+            });
+
+            const feedback = document.getElementById('l3-feedback');
+            feedback.classList.remove('hidden');
+
+            if (correct === collocationData.length) {
+                playSound('correct');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-teal-100 text-teal-800 border border-teal-300";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> 太棒了！10 组搭配全部正确！获得 30 分！`;
+                addScore(30);
+                setTimeout(() => {
+                    unlockLevel(4);
+                    showLevelPassedNotice(3, 4);
+                }, 1200);
+            } else {
+                playSound('wrong');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-rose-100 text-rose-800 border border-rose-300";
+                feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> 匹配正确率：${correct}/${collocationData.length}。请重置后再试一次！`;
+            }
+        }
+
+        // ================= LEVEL 4: 连词成句关 =================
+        function initLevel4() {
+            l4CurrentIdx = 0;
+            loadL4Question();
+        }
+
+        function loadL4Question() {
+            l4UserWords = [];
+            document.getElementById('l4-progress').innerText = `句子 ${l4CurrentIdx + 1} / ${sentenceUnscrambleData.length}`;
+            document.getElementById('l4-feedback').className = "hidden";
+            renderL4Zones();
+        }
+
+        function renderL4Zones() {
+            const data = sentenceUnscrambleData[l4CurrentIdx];
+            const poolZone = document.getElementById('l4-pool-zone');
+            const answerZone = document.getElementById('l4-answer-zone');
+
+            if (l4UserWords.length === 0) {
+                answerZone.innerHTML = `<span class="text-slate-400 text-sm italic w-full text-center">点击下方的词语添加到此处...</span>`;
+            } else {
+                answerZone.innerHTML = l4UserWords.map((word, idx) => `
+                    <button onclick="removeL4Word(${idx})" class="px-3.5 py-2 bg-sky-600 text-white font-bold rounded-xl shadow-sm hover:bg-sky-700 transition text-sm flex items-center gap-1.5 btn-bounce">
+                        <span>${word}</span>
+                        <i class="fa-solid fa-xmark text-xs opacity-70"></i>
+                    </button>
+                `).join('');
+            }
+
+            let available = [...data.words];
+            l4UserWords.forEach(w => {
+                const i = available.indexOf(w);
+                if (i > -1) available.splice(i, 1);
+            });
+
+            poolZone.innerHTML = available.map(word => `
+                <button onclick="addL4Word('${word}')" class="px-3.5 py-2 bg-slate-100 border border-slate-300 text-slate-800 font-bold rounded-xl shadow-sm hover:bg-sky-100 hover:border-sky-300 transition text-sm btn-bounce">
+                    ${word}
+                </button>
+            `).join('');
+        }
+
+        function addL4Word(word) {
+            l4UserWords.push(word);
+            renderL4Zones();
+        }
+
+        function removeL4Word(idx) {
+            l4UserWords.splice(idx, 1);
+            renderL4Zones();
+        }
+
+        function resetL4Current() {
+            l4UserWords = [];
+            renderL4Zones();
+            document.getElementById('l4-feedback').className = "hidden";
+        }
+
+        function checkL4Answer() {
+            const data = sentenceUnscrambleData[l4CurrentIdx];
+            const userStr = l4UserWords.join('');
+            const correctStr = data.correct.join('');
+
+            const feedback = document.getElementById('l4-feedback');
+            feedback.classList.remove('hidden');
+
+            if (userStr === correctStr) {
+                playSound('correct');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-teal-100 text-teal-800 border border-teal-300";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> 连词成句完全正确！(+15分)`;
+                addScore(15);
+
+                setTimeout(() => {
+                    l4CurrentIdx++;
+                    if (l4CurrentIdx < sentenceUnscrambleData.length) {
+                        loadL4Question();
+                    } else {
+                        unlockLevel(5);
+                        showLevelPassedNotice(4, 5);
+                    }
+                }, 1200);
+            } else {
+                playSound('wrong');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-rose-100 text-rose-800 border border-rose-300";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> 句子顺序不太顺畅，请重新调整排列！`;
+            }
+        }
+
+        // ================= LEVEL 5: 课文短文填空关 =================
+        function initLevel5() {
+            document.getElementById('l5-feedback').className = "hidden";
+
+            document.getElementById('l5-word-bank').innerHTML = passageClozeData.bank.map(w => `
+                <span class="px-2.5 py-1 bg-white border border-sky-200 text-sky-800 font-bold text-xs rounded-lg shadow-sm">${w}</span>
+            `).join('');
+
+            const passageContainer = document.getElementById('l5-passage');
+            let html = "";
+
+            passageClozeData.segments.forEach((seg, idx) => {
+                if (typeof seg === 'string') {
+                    html += seg;
+                } else {
+                    html += `
+                        <select id="l5-select-${seg.key}" class="l5-select font-bold text-sky-800 bg-sky-50 border-2 border-sky-300 rounded-lg px-2 py-1 mx-1 focus:outline-none focus:border-sky-500">
+                            <option value="">(选择词语)</option>
+                            ${passageClozeData.bank.map(b => `<option value="${b}">${b}</option>`).join('')}
+                        </select>
+                    `;
+                }
+            });
+
+            passageContainer.innerHTML = html;
+        }
+
+        function resetL5() {
+            document.querySelectorAll('.l5-select').forEach(sel => sel.value = "");
+            document.getElementById('l5-feedback').className = "hidden";
+        }
+
+        function checkL5Answers() {
+            let allCorrect = true;
+            let correctCount = 0;
+            let total = 0;
+
+            passageClozeData.segments.forEach((seg) => {
+                if (typeof seg !== 'string') {
+                    total++;
+                    const sel = document.getElementById(`l5-select-${seg.key}`);
+                    if (sel.value === seg.ans) {
+                        correctCount++;
+                        sel.className = "l5-select font-bold text-teal-900 bg-teal-200 border-2 border-teal-500 rounded-lg px-2 py-1 mx-1";
+                    } else {
+                        allCorrect = false;
+                        sel.className = "l5-select font-bold text-rose-900 bg-rose-100 border-2 border-rose-500 rounded-lg px-2 py-1 mx-1";
+                    }
+                }
+            });
+
+            const feedback = document.getElementById('l5-feedback');
+            feedback.classList.remove('hidden');
+
+            if (allCorrect) {
+                playSound('correct');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-teal-100 text-teal-800 border border-teal-300";
+                feedback.innerHTML = `<i class="fa-solid fa-trophy mr-2"></i> 完美！课文短文填空全部正确！奖励 40 分！`;
+                addScore(40);
+
+                setTimeout(() => {
+                    unlockLevel(6);
+                    showLevelPassedNotice(5, 6);
+                }, 1200);
+            } else {
+                playSound('wrong');
+                feedback.className = "p-4 rounded-xl text-center font-bold mb-4 bg-rose-100 text-rose-800 border border-rose-300";
+                feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> 填对 ${correctCount}/${total} 空。标红部分有误，请修改后重新提交！`;
+            }
+        }
+
+        // ================= LEVEL 6: 阅读理解与故事关 =================
+        function initLevel6() {
+            l6CurrentIdx = 0;
+            loadL6Question();
+        }
+
+        function loadL6Question() {
+            const q = readingQuestionsData[l6CurrentIdx];
+            document.getElementById('l6-progress').innerText = `问题 ${l6CurrentIdx + 1} / ${readingQuestionsData.length}`;
+            document.getElementById('l6-question-text').innerText = q.q;
+            document.getElementById('l6-feedback').className = "hidden";
+            document.getElementById('l6-next-btn').classList.add('hidden');
+
+            const container = document.getElementById('l6-options-container');
+            container.innerHTML = q.options.map((opt, idx) => `
+                <button onclick="checkL6Answer(${idx})" class="l6-opt-btn w-full text-left p-3.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 hover:border-sky-400 hover:bg-sky-50 transition shadow-sm btn-bounce">
+                    ${opt}
+                </button>
+            `).join('');
+        }
+
+        function checkL6Answer(selectedIdx) {
+            document.querySelectorAll('.l6-opt-btn').forEach(b => b.onclick = null);
+
+            const q = readingQuestionsData[l6CurrentIdx];
+            const feedback = document.getElementById('l6-feedback');
+            feedback.classList.remove('hidden');
+
+            if (selectedIdx === q.answer) {
+                playSound('correct');
+                feedback.className = "p-4 rounded-xl text-left font-medium mb-4 bg-teal-100 text-teal-900 border border-teal-300";
+                feedback.innerHTML = `<p class="font-bold text-base mb-1"><i class="fa-solid fa-circle-check text-teal-600 mr-1"></i> 回答正确！(+20分)</p><p class="text-xs text-teal-800">${q.explanation}</p>`;
+                addScore(20);
+            } else {
+                playSound('wrong');
+                feedback.className = "p-4 rounded-xl text-left font-medium mb-4 bg-rose-100 text-rose-900 border border-rose-300";
+                feedback.innerHTML = `<p class="font-bold text-base mb-1"><i class="fa-solid fa-circle-xmark text-rose-600 mr-1"></i> 回答错误！</p><p class="text-xs text-rose-800">${q.explanation}</p>`;
+            }
+
+            document.getElementById('l6-next-btn').classList.remove('hidden');
+        }
+
+        function nextL6Question() {
+            l6CurrentIdx++;
+            if (l6CurrentIdx < readingQuestionsData.length) {
+                loadL6Question();
+            } else {
+                triggerConfetti();
+                showVictoryModal();
+            }
+        }
+
+        // 关卡通关通用提示
+        function showLevelPassedNotice(currentLvl, nextLvl) {
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+            alert(`🎉 恭喜完成第 ${currentLvl} 关！顺利解锁第 ${nextLvl} 关！`);
+            switchLevel(nextLvl);
+        }
+
+        function showVictoryModal() {
+            document.getElementById('final-score').innerText = globalScore;
+            document.getElementById('victory-modal').classList.remove('hidden');
+        }
+
+        function restartFullGame() {
+            globalScore = 0;
+            document.getElementById('global-score').innerText = "0";
+            unlockedLevels = [1];
+            document.getElementById('victory-modal').classList.add('hidden');
+            switchLevel(1);
+        }
+
+        function triggerConfetti() {
+            const count = 200;
+            const defaults = { origin: { y: 0.7 } };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+    </script>
+</body>
+</html>
