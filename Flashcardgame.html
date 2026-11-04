@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>词语星卡 · 汉语词语卡牌复习游戏</title>
+<style>
+  :root{
+    --bg:#F5FAF7;
+    --surface:#FFFFFF;
+    --text:#1E2B26;
+    --muted:#5C6F66;
+    --primary:#218568;
+    --primary-dark:#155C48;
+    --primary-soft:#DDF2E8;
+    --accent:#B8D957;
+    --accent-soft:#EFF7D2;
+    --border:#D7E7DE;
+    --success:#2A8958;
+    --success-text:#1C6A45;
+    --danger:#C65353;
+    --danger-text:#9E3A3A;
+    --radius:18px;
+    --shadow:0 12px 30px rgba(30,43,38,.08);
+    --font: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:16px;
+    line-height:1.7;
+    letter-spacing:0;
+  }
+  a{color:var(--primary-dark)}
+  a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{
+    outline:3px solid var(--primary);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+  .skip{
+    position:absolute;left:-9999px;top:0;background:var(--primary);color:#fff;
+    padding:10px 16px;border-radius:0 0 10px 0;z-index:99;text-decoration:none;
+  }
+  .skip:focus{left:0}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding:12px clamp(14px,4vw,40px);
+    background:var(--surface);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:30;
+  }
+  .brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--primary-dark);font-weight:700}
+  .brand-mark{
+    width:32px;height:32px;border-radius:10px;background:var(--primary);color:#fff;
+    display:grid;place-items:center;font-size:15px;flex:0 0 auto;
+  }
+  .brand-text{display:flex;flex-direction:column;line-height:1.2}
+  .brand-text b{font-size:1.02rem;letter-spacing:.04em}
+  .brand-text small{font-size:.68rem;color:var(--muted);letter-spacing:.08em;font-weight:500}
+  .nav{display:flex;gap:4px;flex-wrap:wrap}
+  .nav a{
+    color:var(--text);text-decoration:none;padding:8px 14px;border-radius:999px;
+    font-size:.92rem;border:1px solid transparent;
+  }
+  .nav a:hover{background:var(--primary-soft);color:var(--primary-dark)}
+  .nav a.is-active{background:var(--primary);color:#fff;font-weight:600}
+  main{max-width:1080px;margin:0 auto;padding:0 clamp(14px,4vw,40px) 56px}
+
+  .hero{
+    margin-top:22px;
+    background:var(--primary-soft);
+    border:1px solid var(--border);
+    border-radius:26px;
+    padding:clamp(22px,3.6vw,40px);
+    display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);
+    gap:clamp(18px,3vw,36px);align-items:center;
+  }
+  .eyebrow{
+    display:inline-block;margin:0 0 12px;font-size:.78rem;letter-spacing:.14em;
+    color:var(--primary-dark);background:#fff;border:1px solid var(--border);
+    padding:5px 12px;border-radius:999px;font-weight:600;
+  }
+  .hero h1{
+    margin:0;font-size:2.6rem;line-height:1.15;
+    color:var(--primary-dark);letter-spacing:.04em;
+  }
+  .hero-lead{margin:16px 0 0;font-size:1.02rem;max-width:34em;color:#20423A}
+  .hero-en{margin:8px 0 0;font-size:.88rem;color:#3C5A50;max-width:38em}
+  .hero-stats{list-style:none;display:flex;gap:clamp(18px,3vw,34px);margin:22px 0 0;padding:0;flex-wrap:wrap}
+  .hero-stats li{display:flex;flex-direction:column;gap:2px}
+  .stat-num{font-size:1.65rem;font-weight:700;color:var(--primary-dark);line-height:1.1}
+  .stat-label{font-size:.78rem;color:#3C5A50;letter-spacing:.04em}
+  .hero-art svg{display:block;width:100%;height:auto}
+
+  body.is-playing .hero{display:none}
+  .view{padding-top:34px;scroll-margin-top:84px}
+  .view[hidden]{display:none}
+  .view-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:22px;
+  }
+  .view-head h2{margin:0;font-size:1.55rem;color:var(--primary-dark)}
+  .view-head p{margin:0;font-size:.86rem;color:var(--muted)}
+
+  .setup-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
+  .panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:clamp(16px,2.4vw,24px);
+  }
+  .panel h3{margin:0 0 10px;font-size:1rem;color:var(--primary-dark);letter-spacing:.02em}
+  .panel p{margin:0 0 12px;font-size:.92rem;color:#33473F}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none}
+  .chip{
+    font-family:inherit;font-size:.86rem;padding:7px 14px;border-radius:999px;
+    border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;
+  }
+  .chip:hover{border-color:var(--primary);color:var(--primary-dark);background:var(--primary-soft)}
+  .field-label{display:block;font-size:.88rem;font-weight:600;margin:0 0 8px;color:#24382F}
+  .hint{font-size:.82rem;color:var(--muted);margin:6px 0 0}
+  textarea{
+    width:100%;min-height:228px;resize:vertical;padding:14px 16px;
+    border:1.5px solid var(--border);border-radius:14px;background:#FCFEFC;color:var(--text);
+    font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Noto Sans Mono CJK SC",monospace;
+    font-size:.92rem;line-height:2;
+  }
+  textarea:focus{border-color:var(--primary)}
+  .parse-status{font-size:.85rem;margin:10px 0 0;color:var(--muted);min-height:1.4em}
+  .parse-status.is-bad{color:var(--danger-text);font-weight:600}
+  .parse-status.is-good{color:var(--success-text);font-weight:600}
+
+  fieldset{border:1px solid var(--border);border-radius:14px;padding:12px 16px 14px;margin:0 0 16px}
+  legend{padding:0 6px;font-size:.85rem;font-weight:600;color:var(--primary-dark);letter-spacing:.02em}
+  .choice{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:.93rem}
+  .choice input{margin-top:5px;accent-color:var(--primary);width:17px;height:17px;flex:0 0 auto}
+  .choice span small{display:block;font-size:.8rem;color:var(--muted);line-height:1.5}
+  .range-row{display:flex;align-items:center;gap:12px;margin-top:4px}
+  .range-row input[type=range]{flex:1;accent-color:var(--primary);min-width:0}
+  .range-row output{font-size:.84rem;color:var(--muted);min-width:3.2em;text-align:right}
+  .voice-note{font-size:.8rem;color:var(--muted);margin:10px 0 0;line-height:1.6}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:inherit;font-size:.96rem;font-weight:600;line-height:1.2;
+    padding:12px 22px;border-radius:999px;border:1.5px solid transparent;
+    cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .12s ease;
+    text-decoration:none;
+  }
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:var(--primary-dark)}
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-ghost{background:var(--surface);border-color:var(--border);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--primary);color:var(--primary-dark)}
+  .btn-block{width:100%;margin-top:4px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  .preview-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:0}
+  .preview-list li{
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    padding:9px 0;border-bottom:1px dashed var(--border);font-size:.92rem;
+  }
+  .preview-list li:last-child{border-bottom:none}
+  .pw{font-weight:600;color:var(--primary-dark);font-size:1.02rem}
+  .pp{color:var(--muted);font-size:.84rem}
+  .pm{color:#33473F;font-size:.88rem}
+  .tag{
+    margin-left:auto;font-size:.72rem;padding:2px 9px;border-radius:999px;
+    background:var(--bg);color:var(--muted);border:1px solid var(--border);white-space:nowrap;
+  }
+  .tag.on{background:var(--accent-soft);color:#4A5D18;border-color:#D6E4A6}
+
+  .play-shell{max-width:760px;margin:0 auto;min-height:56vh}
+  .play-meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:.9rem;color:var(--muted)}
+  .play-meta .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{background:var(--primary-soft);color:var(--primary-dark);padding:4px 12px;border-radius:999px;font-weight:600;font-size:.84rem}
+  .progress{margin:14px 0 20px}
+  .bar{height:10px;border-radius:999px;background:#E3EFE8;overflow:hidden}
+  .bar span{display:block;height:100%;width:0;background:var(--primary);border-radius:999px;transition:width .3s ease}
+  .bar-label{font-size:.82rem;color:var(--muted);margin:7px 0 0}
+
+  .game-card{
+    background:var(--surface);border:1.5px solid var(--border);border-radius:22px;
+    padding:clamp(18px,3vw,30px);text-align:center;box-shadow:var(--shadow);
+    transition:border-color .2s ease;
+  }
+  .game-card.is-solved{border-color:var(--success)}
+  .card-top{display:flex;justify-content:space-between;gap:10px;font-size:.78rem;color:var(--muted);letter-spacing:.06em}
+  .card-word{
+    margin:16px 0 4px;font-size:3.2rem;line-height:1.25;
+    font-weight:700;color:var(--primary-dark);letter-spacing:.1em;
+  }
+  .card-word.is-masked{color:#8FA79C;letter-spacing:0;font-size:2.6rem}
+  .card-pinyin{margin:0;font-size:1rem;color:var(--muted);letter-spacing:.06em;min-height:1.6em}
+  .speak-btn{
+    display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+    font-family:inherit;font-size:.9rem;font-weight:600;color:var(--primary-dark);
+    background:var(--primary-soft);border:1px solid #C4E5D6;border-radius:999px;
+    padding:8px 16px;cursor:pointer;
+  }
+  .speak-btn:hover{background:#CFEBDF}
+  .ico{width:18px;height:18px;flex:0 0 auto}
+
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+  .opt{
+    display:flex;align-items:center;gap:12px;text-align:left;min-height:62px;
+    font-family:inherit;font-size:1rem;color:var(--text);line-height:1.5;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:14px;
+    padding:12px 15px;cursor:pointer;transition:border-color .15s ease,background .15s ease;
+  }
+  .opt:hover:not(:disabled){border-color:var(--primary);background:#F2FBF7}
+  .opt:disabled{cursor:default}
+  .opt-key{
+    flex:0 0 auto;width:25px;height:25px;border-radius:8px;background:var(--bg);
+    border:1px solid var(--border);display:grid;place-items:center;
+    font-size:.78rem;font-weight:700;color:var(--muted);
+  }
+  .opt-text{flex:1;min-width:0;overflow-wrap:anywhere}
+  .opt.is-correct{border-color:var(--success);background:var(--accent-soft)}
+  .opt.is-correct .opt-key{background:var(--success);border-color:var(--success);color:#fff}
+  .opt.is-wrong{border-color:var(--danger);background:#FBEDED}
+  .opt.is-wrong .opt-key{background:var(--danger);border-color:var(--danger);color:#fff}
+  .opt-mark{font-size:.78rem;font-weight:700;white-space:nowrap}
+  .opt.is-correct .opt-mark{color:var(--success-text)}
+  .opt.is-wrong .opt-mark{color:var(--danger-text)}
+
+  .feedback{margin-top:18px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--bg);display:none}
+  .feedback.is-shown{display:block}
+  .feedback.ok{border-color:#B6E2C7;background:#EEFAF3}
+  .feedback.no{border-color:#EFC5C5;background:#FDF3F3}
+  .feedback p{margin:0}
+  .fb-main{font-weight:600;font-size:.98rem}
+  .fb-sub{font-size:.85rem;color:var(--muted);margin-top:3px}
+
+  .quote-panel{
+    margin-top:14px;padding:16px 18px;border-left:4px solid var(--primary);
+    background:var(--primary-soft);border-radius:0 14px 14px 0;
+  }
+  .quote-panel[hidden]{display:none}
+  .quote-panel blockquote{margin:0;font-size:1.02rem;color:var(--primary-dark);line-height:1.75}
+  .quote-panel cite{display:block;margin-top:6px;font-size:.82rem;color:#3C5A50;font-style:normal}
+  .quote-en{margin:8px 0 0;font-size:.83rem;color:#3C5A50}
+
+  .summary{background:var(--surface);border:1.5px solid var(--border);border-radius:22px;padding:clamp(20px,3vw,32px);box-shadow:var(--shadow)}
+  .summary[hidden]{display:none}
+  .summary h3{margin:0 0 6px;font-size:1.3rem;color:var(--primary-dark)}
+  .summary-lead{margin:0 0 18px;color:#33473F;font-size:.95rem}
+  .sum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 18px;padding:0;list-style:none}
+  .sum-grid li{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+  .sum-grid b{display:block;font-size:1.5rem;color:var(--primary-dark);line-height:1.2}
+  .sum-grid span{font-size:.78rem;color:var(--muted)}
+  .sum-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .next-row{justify-content:flex-end}
+
+  .collection-head{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .collection-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
+  .mini{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:15px 16px;display:flex;flex-direction:column;gap:4px;
+  }
+  .mini.is-mastered{border-color:#A9DCC0;background:#F5FCF8}
+  .mini h3{margin:0;font-size:1.42rem;color:var(--primary-dark);letter-spacing:.08em;font-weight:700}
+  .mini-pinyin{margin:0;font-size:.86rem;color:var(--muted);letter-spacing:.04em}
+  .mini-meaning{margin:0;font-size:.9rem;color:#33473F}
+  .pips{display:flex;gap:5px;margin-top:6px}
+  .pip{width:10px;height:10px;border-radius:50%;background:#DDEAE2;border:1px solid #CBDDD3}
+  .pip.on{background:var(--success);border-color:var(--success)}
+  .mini .speak-btn{margin-top:10px;align-self:flex-start;font-size:.8rem;padding:5px 12px}
+  .empty{
+    background:var(--surface);border:1px dashed var(--border);border-radius:16px;
+    padding:26px;text-align:center;color:var(--muted);font-size:.94rem;
+  }
+
+  .foot{
+    max-width:1080px;margin:44px auto 0;padding:18px clamp(14px,4vw,40px) 40px;
+    border-top:1px solid var(--border);color:var(--muted);font-size:.82rem;line-height:1.8;
+  }
+  .foot p{margin:0 0 6px}
+  .kbd{
+    display:inline-block;padding:1px 6px;border:1px solid var(--border);border-bottom-width:2px;
+    border-radius:5px;background:var(--surface);font-size:.78rem;color:var(--text);
+    font-family:ui-monospace,Menlo,Consolas,monospace;
+  }
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:minmax(0,1fr)}
+    .hero-art{max-width:340px;margin:0 auto}
+    .setup-grid{grid-template-columns:minmax(0,1fr)}
+  }
+  @media (max-width:620px){
+    body{font-size:15.5px}
+    .hero h1{font-size:2.05rem}
+    .view-head h2{font-size:1.32rem}
+    .card-word{font-size:2.5rem}
+    .card-word.is-masked{font-size:2.1rem}
+    .kbd-hint{display:none}
+    .options{grid-template-columns:minmax(0,1fr)}
+    .sum-grid{grid-template-columns:minmax(0,1fr)}
+    .topbar{padding:10px 14px}
+    .nav a{padding:7px 11px;font-size:.86rem}
+  }
+  @media print{
+    .topbar,.nav,.skip,.speak-btn,.chips,.sum-actions,.feedback{display:none !important}
+    body{background:#fff;color:#000;font-size:12pt}
+    .view{display:block}
+    .view[hidden]{display:none !important}
+    .hero,.panel,.game-card,.summary,.mini{box-shadow:none;border:1px solid #8A9A92}
+    .foot{break-before:page;page-break-before:always}
+    .hero{background:#fff}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到主要内容</a>
+
+<header class="topbar">
+  <a class="brand" href="#view-setup">
+    <span class="brand-mark" aria-hidden="true">★</span>
+    <span class="brand-text"><b>词语星卡</b><small>WORD STAR CARDS</small></span>
+  </a>
+  <nav class="nav" aria-label="主要导航">
+    <a href="#view-setup">① 我的词库</a>
+    <a href="#view-play">② 抽卡对战</a>
+    <a href="#view-collection">③ 星卡册</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <section class="hero" data-hero aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="eyebrow">汉语词语 · 卡牌复习 · 语音鼓励</p>
+      <h1 id="hero-title">词语星卡</h1>
+      <p class="hero-lead">把学过的词语输进来，抽一张卡，选一个答案。每答对一次，这张卡就亮起一颗星；答错的词会回到牌堆里再来找你，直到你真的记住它。</p>
+      <p class="hero-en">Type in the words you have learned, draw a card, and pick the right answer. Every correct answer lights a star — and the words you miss come back for another try.</p>
+      <ul class="hero-stats">
+        <li><span class="stat-num" id="stat-words">0</span><span class="stat-label">词库词数</span></li>
+        <li><span class="stat-num" id="stat-mastered">0</span><span class="stat-label">已掌握</span></li>
+        <li><span class="stat-num" id="stat-stars">0</span><span class="stat-label">累计星星</span></li>
+      </ul>
+    </div>
+    <div class="hero-art">
+      <svg viewBox="0 0 360 300" role="img" aria-label="三张叠放的词语卡牌，最上面一张写着汉字「学」，旁边有星星和声音波纹">
+        <defs>
+          <filter id="cardShadow" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#1E2B26" flood-opacity="0.14"></feDropShadow>
+          </filter>
+        </defs>
+        <rect x="14" y="30" width="120" height="118" rx="18" fill="#B8D957" opacity="0.45" transform="rotate(-16 74 89)"></rect>
+        <g transform="rotate(-9 150 150)" filter="url(#cardShadow)">
+          <rect x="52" y="74" width="168" height="150" rx="18" fill="#FFFFFF" stroke="#D7E7DE" stroke-width="2"></rect>
+        </g>
+        <g transform="rotate(7 200 158)">
+          <rect x="88" y="76" width="174" height="154" rx="18" fill="#EFF7D2" stroke="#CFE3B4" stroke-width="2"></rect>
+        </g>
+        <g filter="url(#cardShadow)">
+          <rect x="98" y="66" width="180" height="162" rx="20" fill="#FFFFFF" stroke="#218568" stroke-width="2.5"></rect>
+          <circle cx="122" cy="96" r="4" fill="#B8D957"></circle>
+          <circle cx="254" cy="96" r="4" fill="#B8D957"></circle>
+          <text x="188" y="150" text-anchor="middle" font-size="56" font-weight="700" fill="#155C48" font-family="'Noto Sans SC','PingFang SC',sans-serif">学</text>
+          <text x="188" y="182" text-anchor="middle" font-size="15" fill="#5C6F66" letter-spacing="1.5" font-family="'Noto Sans SC',sans-serif">xué</text>
+          <line x1="140" y1="200" x2="236" y2="200" stroke="#D7E7DE" stroke-width="2" stroke-linecap="round"></line>
+        </g>
+        <path d="M300 46l5 12 13 2-9 9 2 13-11-7-11 7 2-13-9-9 13-2z" fill="#B8D957"></path>
+        <path d="M64 224l4 9 10 1-7 7 2 10-9-5-8 5 2-10-7-7 10-1z" fill="#218568" opacity="0.55"></path>
+        <path d="M300 214l3.4 8 8.6 1-6 6 1.6 9-7.6-4.6-7.4 4.6 1.6-9-6-6 8.6-1z" fill="#218568" opacity="0.4"></path>
+        <g fill="none" stroke="#218568" stroke-width="2.6" stroke-linecap="round" opacity="0.65">
+          <path d="M292 132a18 18 0 0 1 0 24"></path>
+          <path d="M303 124a30 30 0 0 1 0 40"></path>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section class="view" id="view-setup" data-page="setup" aria-labelledby="setup-title">
+    <div class="view-head">
+      <h2 id="setup-title">第一步 · 准备你的词库</h2>
+      <p>三种现成词包，也可以粘贴老师给的表</p>
+    </div>
+
+    <div class="setup-grid">
+      <div class="panel">
+        <h3>词表</h3>
+        <p>每行一个词，用竖线分开：<strong>词语｜拼音｜释义</strong>。拼音和释义写其中一个就能开始；如果只写拼音，卡片就会考「词 ↔ 拼音」。</p>
+        <ul class="chips">
+          <li><button type="button" class="chip" id="pack-daily">日常 20 词</button></li>
+          <li><button type="button" class="chip" id="pack-feelings">情绪与性格</button></li>
+          <li><button type="button" class="chip" id="pack-growth">学习与成长</button></li>
+        </ul>
+        <label class="field-label" for="word-input">我的词表（每行：词语｜拼音｜释义）</label>
+        <textarea id="word-input" spellcheck="false" rows="10" placeholder="苹果｜píngguǒ｜apple&#10;学校｜xuéxiào｜school"></textarea>
+        <p class="parse-status" id="parse-status" role="status" aria-live="polite"></p>
+        <p class="hint">示例：<code>苹果｜píngguǒ｜apple</code>；也可以只用逗号分隔。重复的词会自动去重。</p>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h3>玩法</h3>
+          <fieldset>
+            <legend>选一种抽卡方式</legend>
+            <label class="choice" for="mode-meaning">
+              <input type="radio" id="mode-meaning" name="mode" value="meaning" checked>
+              <span>看词选义<small>看到词语，从四个选项里选出它的意思</small></span>
+            </label>
+            <label class="choice" for="mode-listen">
+              <input type="radio" id="mode-listen" name="mode" value="listen">
+              <span>听音选词<small>听发音，选出你听到的那个词语（练耳朵）</small></span>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>语音反馈</legend>
+            <label class="choice" for="voice-toggle">
+              <input type="checkbox" id="voice-toggle" checked>
+              <span>打开语音<small>朗读词语、鼓励语和名人名言</small></span>
+            </label>
+            <div class="range-row">
+              <label class="field-label" for="rate" style="margin:0">语速</label>
+              <input type="range" id="rate" min="0.6" max="1.3" step="0.1" value="1">
+              <output id="rate-out" for="rate">1.0×</output>
+            </div>
+            <p class="voice-note" id="voice-note">语音由浏览器本地合成，不联网、不上传任何内容。</p>
+          </fieldset>
+
+          <button type="button" class="btn btn-primary btn-block" id="start-btn">开始抽卡</button>
+        </div>
+
+        <div class="panel" style="margin-top:20px">
+          <h3>词表预览</h3>
+          <p class="hint" id="preview-count">还没有载入词语。</p>
+          <ul class="preview-list" id="preview-list"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-play" data-page="play" aria-labelledby="play-title">
+    <div class="view-head">
+      <h2 id="play-title">第二步 · 抽卡对战</h2>
+      <p class="kbd-hint">键盘 <span class="kbd">1</span>–<span class="kbd">4</span> 选答案，<span class="kbd">Enter</span> 下一张</p>
+    </div>
+
+    <div class="play-shell">
+      <p class="empty" id="play-empty" hidden>还没有开始。<a href="#view-setup">回到词库</a>，载入至少两个词，就能抽第一张卡。</p>
+      <div id="play-area">
+        <div class="play-meta">
+          <div class="pills">
+            <span class="pill" id="pill-card">第 0 张卡</span>
+            <span class="pill" id="pill-combo">连对 0</span>
+            <span class="pill" id="pill-stars">★ 0</span>
+          </div>
+          <button type="button" class="chip" id="quit-btn">结束本轮</button>
+        </div>
+
+        <div class="progress">
+          <div class="bar" id="bar" role="progressbar" aria-labelledby="bar-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="bar-fill"></span>
+          </div>
+          <p class="bar-label" id="bar-label">本轮答对 0 / 0 个词</p>
+        </div>
+
+        <article class="game-card" id="game-card" aria-label="当前词语卡">
+          <div class="card-top">
+            <span id="card-tag">词语卡</span>
+            <span id="card-hint">看词选义</span>
+          </div>
+          <p class="card-word" id="card-word" lang="zh-Hans">—</p>
+          <p class="card-pinyin" id="card-pinyin"></p>
+          <button type="button" class="speak-btn" id="speak-word" aria-label="朗读这个词语">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4z" fill="currentColor"></path><path d="M16.4 8.6a5 5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M19 6.2a8.4 8.4 0 0 1 0 11.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+            <span>听发音</span>
+          </button>
+        </article>
+
+        <div class="options" id="options" role="group" aria-label="答案选项"></div>
+
+        <div class="feedback" id="feedback" role="status" aria-live="polite">
+          <p class="fb-main" id="fb-main"></p>
+          <p class="fb-sub" id="fb-sub"></p>
+        </div>
+
+        <div class="quote-panel" id="quote-panel" hidden>
+          <blockquote id="quote-text"></blockquote>
+          <cite id="quote-src"></cite>
+          <p class="quote-en" id="quote-en"></p>
+        </div>
+
+        <div class="sum-actions next-row">
+          <button type="button" class="btn btn-primary" id="next-btn" hidden>下一张 →</button>
+        </div>
+      </div>
+
+      <div class="summary" id="round-summary" hidden aria-labelledby="sum-title">
+        <h3 id="sum-title">这一轮结束了</h3>
+        <p class="summary-lead" id="sum-lead"></p>
+        <ul class="sum-grid">
+          <li><b id="sum-acc">0%</b><span>本轮正确率</span></li>
+          <li><b id="sum-stars">0</b><span>本轮星星</span></li>
+          <li><b id="sum-best">0</b><span>最长连对</span></li>
+        </ul>
+        <div class="quote-panel" id="sum-quote-panel">
+          <blockquote id="sum-quote"></blockquote>
+          <cite id="sum-quote-src"></cite>
+          <p class="quote-en" id="sum-quote-en"></p>
+        </div>
+        <div class="sum-actions">
+          <button type="button" class="btn btn-primary" id="again-btn">再来一轮</button>
+          <a class="btn btn-ghost" href="#view-collection">看看星卡册</a>
+          <a class="btn btn-ghost" href="#view-setup">改改词库</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-collection" data-page="collection" aria-labelledby="collection-title">
+    <div class="view-head">
+      <h2 id="collection-title">第三步 · 星卡册</h2>
+      <p>一个词答对两次，就从「在学」变成「已掌握」</p>
+    </div>
+    <div class="collection-head">
+      <span class="pill" id="col-count">0 个词</span>
+      <span class="pill" id="col-mastered">已掌握 0</span>
+      <button type="button" class="chip" id="speak-all">按顺序朗读全部词语</button>
+    </div>
+    <div class="collection-grid" id="collection-grid"></div>
+    <p class="empty" id="col-empty" hidden>还没有词语。先到「我的词库」里粘贴一张词表，或点一个现成词包。</p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p><strong>怎么用：</strong>老师把这一周学过的词语粘进词库，学生每次抽 5 分钟；答错的词会自动回到牌堆，直到连续答对两次。</p>
+  <p><strong>关于语音：</strong>朗读使用设备自带的语音合成，离线可用；发音是否标准取决于设备是否装了中文语音包。没有语音时，鼓励语和名言仍会显示在屏幕上。</p>
+  <p><strong>关于数据：</strong>词表、星星和掌握进度只保存在这台设备的浏览器里，不会上传到任何服务器。清除浏览器数据会一并清空。</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var PACKS = {
+    daily: '苹果｜píngguǒ｜apple\n学校｜xuéxiào｜school\n朋友｜péngyou｜friend\n高兴｜gāoxìng｜happy\n老师｜lǎoshī｜teacher\n喜欢｜xǐhuan｜to like\n时间｜shíjiān｜time\n天气｜tiānqì｜weather\n帮助｜bāngzhù｜to help\n努力｜nǔlì｜to work hard\n旅行｜lǚxíng｜to travel\n音乐｜yīnyuè｜music\n运动｜yùndòng｜sports\n照片｜zhàopiàn｜photo\n礼物｜lǐwù｜gift\n担心｜dānxīn｜to worry\n安静｜ānjìng｜quiet\n分享｜fēnxiǎng｜to share\n勇敢｜yǒnggǎn｜brave\n好奇｜hàoqí｜curious',
+    feelings: '开心｜kāixīn｜happy\n难过｜nánguò｜sad\n生气｜shēngqì｜angry\n紧张｜jǐnzhāng｜nervous\n兴奋｜xīngfèn｜excited\n骄傲｜jiāo\'ào｜proud\n害羞｜hàixiū｜shy\n耐心｜nàixīn｜patient\n诚实｜chéngshí｜honest\n幽默｜yōumò｜humorous\n温柔｜wēnróu｜gentle\n自信｜zìxìn｜confident\n失望｜shīwàng｜disappointed\n放心｜fàngxīn｜to feel relieved',
+    growth: '复习｜fùxí｜to review\n记忆｜jìyì｜memory\n进步｜jìnbù｜progress\n目标｜mùbiāo｜goal\n计划｜jìhuà｜plan\n坚持｜jiānchí｜to keep going\n练习｜liànxí｜to practise\n发现｜fāxiàn｜to discover\n理解｜lǐjiě｜to understand\n提问｜tíwèn｜to ask a question\n答案｜dá\'àn｜answer\n成绩｜chéngjì｜grade\n挑战｜tiǎozhàn｜challenge\n收获｜shōuhuò｜what you gain'
+  };
+
+  var ENCOURAGE = [
+    { zh: '太棒了！', en: 'Awesome!' },
+    { zh: '你做到了！', en: 'You did it!' },
+    { zh: '记得真牢！', en: 'That really stuck!' },
+    { zh: '就是这样！', en: 'Exactly right!' },
+    { zh: '又记住一个词！', en: 'One more word in your pocket!' },
+    { zh: '你的努力有回报了！', en: 'Your effort is paying off!' },
+    { zh: '越来越熟练了！', en: 'You are getting smoother every card!' }
+  ];
+
+  var GENTLE = [
+    { zh: '没关系，再试一次。', en: 'No worries — try again.' },
+    { zh: '这个词我们再见一次。', en: 'We will meet this word again.' },
+    { zh: '差一点点，看清楚了。', en: 'So close. Take a good look.' },
+    { zh: '记住它，就是进步。', en: 'Noticing it is already progress.' },
+    { zh: '慢慢来，你在学习。', en: 'Take your time — you are learning.' }
+  ];
+
+  var QUOTES = [
+    { zh: '学而时习之，不亦说乎？', src: '《论语·学而》', en: 'To learn something and keep practising it — is that not a joy?' },
+    { zh: '知之者不如好之者，好之者不如乐之者。', src: '《论语·雍也》', en: 'Those who know it are not equal to those who love it; those who love it are not equal to those who delight in it.' },
+    { zh: '温故而知新，可以为师矣。', src: '《论语·为政》', en: 'Review what is old and learn what is new — then you can be a teacher.' },
+    { zh: '不积跬步，无以至千里。', src: '《荀子·劝学》', en: 'Without small steps, there is no thousand-mile journey.' },
+    { zh: '锲而不舍，金石可镂。', src: '《荀子·劝学》', en: 'Carve without stopping, and even metal and stone can be engraved.' },
+    { zh: '千里之行，始于足下。', src: '《老子》第六十四章', en: 'A journey of a thousand miles begins under your feet.' },
+    { zh: '读书破万卷，下笔如有神。', src: '杜甫《奉赠韦左丞丈二十二韵》', en: 'Read ten thousand scrolls, and your pen will move as if inspired.' },
+    { zh: '业精于勤，荒于嬉。', src: '韩愈《进学解》', en: 'Mastery comes from diligence and is ruined by play.' },
+    { zh: '纸上得来终觉浅，绝知此事要躬行。', src: '陆游《冬夜读书示子聿》', en: 'What comes from books feels shallow; to truly know a thing you must do it yourself.' },
+    { zh: '少年易老学难成，一寸光阴不可轻。', src: '朱熹《偶成》', en: 'Youth ages quickly and learning takes long — do not treat a single moment lightly.' },
+    { zh: '路漫漫其修远兮，吾将上下而求索。', src: '屈原《离骚》', en: 'The road ahead is long; I will search high and low.' },
+    { zh: '天生我材必有用。', src: '李白《将进酒》', en: 'Whatever I am made of, it is bound to be of use.' }
+  ];
+
+  var STORE_KEY = 'cike-xingka-v1';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+  function shuffle(list) {
+    var arr = list.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  var saved = {};
+  try { saved = JSON.parse(window.localStorage.getItem(STORE_KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  var mastery = (saved.mastery && typeof saved.mastery === 'object') ? saved.mastery : {};
+
+  var state = {
+    words: [],
+    deck: [],
+    current: null,
+    options: [],
+    answered: false,
+    mode: 'meaning',
+    voiceOn: true,
+    rate: 1,
+    stars: 0,
+    totalStars: 0,
+    combo: 0,
+    bestCombo: 0,
+    drawn: 0,
+    sessionCorrect: 0,
+    sessionAttempts: 0,
+    sinceQuote: 0,
+    roundHits: {}
+  };
+
+  var speechSupported = ('speechSynthesis' in window) && (typeof window.SpeechSynthesisUtterance === 'function');
+  var voices = { zh: null, en: null };
+
+  function pickVoices() {
+    if (!speechSupported) { return; }
+    var list = [];
+    try { list = window.speechSynthesis.getVoices() || []; } catch (e) { list = []; }
+    voices.zh = null; voices.en = null;
+    for (var i = 0; i < list.length; i++) {
+      var lang = String(list[i].lang || '').replace('_', '-');
+      if (!voices.zh && /^zh(-|$)/i.test(lang)) { voices.zh = list[i]; }
+      if (!voices.en && /^en(-|$)/i.test(lang)) { voices.en = list[i]; }
+    }
+  }
+
+  function makeUtterance(text, lang, rateValue) {
+    if (!speechSupported) { return null; }
+    var u = new window.SpeechSynthesisUtterance(text);
+    u.lang = lang || 'zh-CN';
+    var v = (u.lang.indexOf('en') === 0) ? voices.en : voices.zh;
+    if (v) { u.voice = v; }
+    u.rate = typeof rateValue === 'number' ? rateValue : state.rate;
+    u.pitch = 1.03;
+    u.volume = 1;
+    return u;
+  }
+
+  function speak(text, lang, rateValue) {
+    if (!state.voiceOn || !speechSupported || !text) { return; }
+    try {
+      var u = makeUtterance(text, lang, rateValue);
+      if (u) { window.speechSynthesis.speak(u); }
+    } catch (e) { /* 语音不可用时静默降级 */ }
+  }
+
+  function stopSpeech() {
+    if (!speechSupported) { return; }
+    try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  }
+
+  var audioCtx = null;
+  function chime(ok) {
+    if (!state.voiceOn) { return; }
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) { return; }
+      if (!audioCtx) { audioCtx = new Ctx(); }
+      if (audioCtx.state === 'suspended' && audioCtx.resume) { audioCtx.resume(); }
+      var notes = ok ? [523.25, 783.99] : [311.13, 261.63];
+      notes.forEach(function (freq, idx) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        var start = audioCtx.currentTime + idx * 0.09;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.06, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(start);
+        osc.stop(start + 0.24);
+      });
+    } catch (e) { /* 音频不可用时静默降级 */ }
+  }
+
+  function masteryOf(word) {
+    var m = mastery[word];
+    if (!m || typeof m !== 'object') { return { c: 0, w: 0 }; }
+    return { c: typeof m.c === 'number' ? m.c : 0, w: typeof m.w === 'number' ? m.w : 0 };
+  }
+
+  function parseWords(text) {
+    var words = [];
+    var seen = {};
+    var skipped = 0;
+    var lines = String(text || '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.charAt(0) === '#') { continue; }
+      var parts = line.split(/[|｜,，;；\t]+/).map(function (s) { return s.trim(); });
+      var word = parts[0] || '';
+      var pinyin = parts[1] || '';
+      var meaning = parts.slice(2).join(', ');
+      if (!word) { continue; }
+      if (!pinyin && !meaning) { skipped++; continue; }
+      if (seen[word]) { continue; }
+      seen[word] = true;
+      words.push({ word: word, pinyin: pinyin, meaning: meaning || pinyin });
+    }
+    return { words: words, skipped: skipped };
+  }
+
+  function persist() {
+    try {
+      window.localStorage.setItem(STORE_KEY, JSON.stringify({
+        custom: $('word-input').value,
+        mastery: mastery,
+        totalStars: state.totalStars,
+        mode: state.mode,
+        voiceOn: state.voiceOn,
+        rate: state.rate
+      }));
+    } catch (e) { /* 隐私模式或存储已满时忽略 */ }
+  }
+
+  function setStatus(message, tone) {
+    var el = $('parse-status');
+    el.textContent = message;
+    el.className = 'parse-status' + (tone ? ' is-' + tone : '');
+  }
+
+  function updateStats() {
+    var parsed = parseWords($('word-input').value);
+    var mastered = 0;
+    parsed.words.forEach(function (w) { if (masteryOf(w.word).c >= 2) { mastered++; } });
+    $('stat-words').textContent = String(parsed.words.length);
+    $('stat-mastered').textContent = String(mastered);
+    $('stat-stars').textContent = String(state.totalStars);
+    $('col-count').textContent = parsed.words.length + ' 个词';
+    $('col-mastered').textContent = '已掌握 ' + mastered;
+    return { total: parsed.words.length, mastered: mastered };
+  }
+
+  function renderPreview() {
+    var parsed = parseWords($('word-input').value);
+    var list = $('preview-list');
+    list.textContent = '';
+    if (!parsed.words.length) {
+      $('preview-count').textContent = '还没有载入词语。';
+      return;
+    }
+    $('preview-count').textContent = '共 ' + parsed.words.length + ' 个词' + (parsed.skipped ? '，跳过 ' + parsed.skipped + ' 行（缺少拼音和释义）' : '');
+    parsed.words.forEach(function (w) {
+      var m = masteryOf(w.word);
+      var li = document.createElement('li');
+      var a = document.createElement('span'); a.className = 'pw'; a.textContent = w.word; a.lang = 'zh-Hans';
+      var b = document.createElement('span'); b.className = 'pp'; b.textContent = w.pinyin || '—';
+      var c = document.createElement('span'); c.className = 'pm';
+      c.textContent = (w.meaning === w.pinyin) ? '（无释义，练拼音）' : w.meaning;
+      var t = document.createElement('span');
+      t.className = 'tag' + (m.c >= 2 ? ' on' : '');
+      t.textContent = m.c >= 2 ? '已掌握' : (m.c === 1 ? '在学 1/2' : '新卡');
+      li.appendChild(a); li.appendChild(b); li.appendChild(c); li.appendChild(t);
+      list.appendChild(li);
+    });
+  }
+
+  function refreshSetup() {
+    var parsed = parseWords($('word-input').value);
+    updateStats();
+    renderPreview();
+    if (parsed.words.length < 2) {
+      setStatus('至少需要 2 个词才能开始抽卡。', 'bad');
+    } else if (parsed.skipped) {
+      setStatus('已载入 ' + parsed.words.length + ' 个词，跳过 ' + parsed.skipped + ' 行（缺少拼音和释义）。', 'good');
+    } else {
+      setStatus('已载入 ' + parsed.words.length + ' 个词，可以开始了。', 'good');
+    }
+  }
+
+  function showView(id) {
+    var views = document.querySelectorAll('.view');
+    Array.prototype.forEach.call(views, function (v) { v.hidden = (v.id !== id); });
+    var links = document.querySelectorAll('.nav a');
+    Array.prototype.forEach.call(links, function (a) {
+      var on = a.getAttribute('href') === '#' + id;
+      if (on) { a.className = 'is-active'; a.setAttribute('aria-current', 'page'); }
+      else { a.className = ''; a.removeAttribute('aria-current'); }
+    });
+    document.body.className = (id === 'view-setup') ? '' : 'is-playing';
+    if (id === 'view-play') {
+      var summaryShown = !$('round-summary').hidden;
+      $('play-empty').hidden = !!(state.current || summaryShown);
+      $('play-area').hidden = !state.current || summaryShown;
+    }
+    if (id === 'view-collection') { renderCollection(); }
+    if (id === 'view-setup') { refreshSetup(); }
+    try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
+  }
+
+  function buildOptions(cur) {
+    var key = state.mode === 'meaning' ? 'meaning' : 'word';
+    var correctText = cur[key];
+    var seen = {};
+    seen[correctText] = true;
+    var pool = [];
+    shuffle(state.words).forEach(function (w) {
+      var text = w[key];
+      if (!text || seen[text]) { return; }
+      seen[text] = true;
+      pool.push(text);
+    });
+    var opts = [{ text: correctText, correct: true }];
+    for (var i = 0; i < pool.length && i < 3; i++) {
+      opts.push({ text: pool[i], correct: false });
+    }
+    return shuffle(opts);
+  }
+
+  function renderCard() {
+    var w = state.current;
+    var m = masteryOf(w.word);
+    var tagState = m.c >= 2 ? '已掌握' : (m.c === 1 ? '在学 1/2' : '新卡');
+    $('card-tag').textContent = '第 ' + state.drawn + ' 张 · ' + tagState;
+    $('card-hint').textContent = state.mode === 'listen' ? '听音选词' : '看词选义';
+    $('game-card').className = 'game-card';
+    var wordEl = $('card-word');
+    if (state.mode === 'listen') {
+      wordEl.textContent = '？';
+      wordEl.className = 'card-word is-masked';
+      $('card-pinyin').textContent = '点「听发音」，再选出你听到的词语';
+    } else {
+      wordEl.textContent = w.word;
+      wordEl.className = 'card-word';
+      $('card-pinyin').textContent = w.pinyin || '';
+    }
+  }
+
+  function renderOptions() {
+    var box = $('options');
+    box.textContent = '';
+    state.options.forEach(function (opt, index) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'opt';
+      btn.setAttribute('data-index', String(index));
+      var key = document.createElement('span');
+      key.className = 'opt-key';
+      key.setAttribute('aria-hidden', 'true');
+      key.textContent = String(index + 1);
+      var label = document.createElement('span');
+      label.className = 'opt-text';
+      label.textContent = opt.text;
+      if (state.mode === 'listen') { label.lang = 'zh-Hans'; }
+      btn.appendChild(key);
+      btn.appendChild(label);
+      btn.addEventListener('click', function () { answer(index); });
+      box.appendChild(btn);
+    });
+  }
+
+  function showFeedback(ok, main, sub) {
+    var box = $('feedback');
+    box.className = 'feedback is-shown ' + (ok ? 'ok' : 'no');
+    $('fb-main').textContent = main;
+    $('fb-sub').textContent = sub;
+  }
+
+  function clearFeedback() {
+    var box = $('feedback');
+    box.className = 'feedback';
+    $('fb-main').textContent = '';
+    $('fb-sub').textContent = '';
+  }
+
+  function showQuote(q) {
+    $('quote-text').textContent = q.zh;
+    $('quote-src').textContent = '—— ' + q.src;
+    $('quote-en').textContent = q.en + '（英文意译）';
+    $('quote-panel').hidden = false;
+    window.setTimeout(function () { speak(q.zh, 'zh-CN'); }, 900);
+  }
+
+  function updatePlayMeta() {
+    var mastered = 0;
+    state.words.forEach(function (w) { if (masteryOf(w.word).c >= 2) { mastered++; } });
+    var hits = Object.keys(state.roundHits).length;
+    var total = state.words.length || 1;
+    var pct = Math.round(hits / total * 100);
+    $('pill-card').textContent = '第 ' + state.drawn + ' 张卡';
+    $('pill-combo').textContent = '连对 ' + state.combo;
+    $('pill-stars').textContent = '★ ' + state.stars;
+    $('bar-fill').style.width = pct + '%';
+    $('bar').setAttribute('aria-valuenow', String(pct));
+    $('bar-label').textContent = '本轮答对 ' + hits + ' / ' + state.words.length + ' 个词' + (mastered ? ' · 已掌握 ' + mastered : '');
+    $('stat-stars').textContent = String(state.totalStars);
+    $('stat-mastered').textContent = String(mastered);
+  }
+
+  function nextCard() {
+    if (!state.deck.length) { finishRound(); return; }
+    var id = state.deck.shift();
+    state.current = null;
+    for (var i = 0; i < state.words.length; i++) {
+      if (state.words[i].word === id) { state.current = state.words[i]; break; }
+    }
+    if (!state.current) { nextCard(); return; }
+    state.answered = false;
+    state.drawn++;
+    state.options = buildOptions(state.current);
+    $('play-empty').hidden = true;
+    $('play-area').hidden = false;
+    renderCard();
+    renderOptions();
+    clearFeedback();
+    $('quote-panel').hidden = true;
+    $('next-btn').hidden = true;
+    $('game-card').className = 'game-card';
+    updatePlayMeta();
+    if (state.mode === 'listen') { speakWord(); }
+  }
+
+  function speakWord() {
+    if (!state.current) { return; }
+    stopSpeech();
+    speak(state.current.word, 'zh-CN', Math.max(0.6, state.rate * 0.9));
+  }
+
+  function answer(index) {
+    if (state.answered || !state.current) { return; }
+    state.answered = true;
+    state.sessionAttempts++;
+    var w = state.current;
+    var m = masteryOf(w.word);
+    var chosen = state.options[index];
+    var buttons = $('options').querySelectorAll('.opt');
+
+    Array.prototype.forEach.call(buttons, function (b, i) {
+      b.disabled = true;
+      if (state.options[i].correct) {
+        b.classList.add('is-correct');
+        var mark = document.createElement('span');
+        mark.className = 'opt-mark';
+        mark.textContent = '正确';
+        b.appendChild(mark);
+      }
+    });
+
+    if (state.mode === 'listen') {
+      $('card-word').textContent = w.word;
+      $('card-word').className = 'card-word';
+      $('card-pinyin').textContent = w.pinyin || '';
+    }
+
+    if (chosen && chosen.correct) {
+      state.combo++;
+      state.sessionCorrect++;
+      state.roundHits[w.word] = true;
+      if (state.combo > state.bestCombo) { state.bestCombo = state.combo; }
+      var gain = 10 + Math.min(state.combo - 1, 5) * 2;
+      state.stars += gain;
+      state.totalStars += gain;
+      m.c = Math.min(2, m.c + 1);
+      mastery[w.word] = m;
+      $('game-card').className = 'game-card is-solved';
+      var line = pick(ENCOURAGE);
+      showFeedback(true, line.zh + ' ' + w.word + '（' + (w.pinyin || '') + '）＝ ' + w.meaning + '，+' + gain + '★', line.en);
+      stopSpeech();
+      speak(line.zh, 'zh-CN');
+      chime(true);
+      state.sinceQuote++;
+      if (state.sinceQuote >= 3) {
+        state.sinceQuote = 0;
+        showQuote(pick(QUOTES));
+      }
+    } else {
+      state.combo = 0;
+      m.w = m.w + 1;
+      mastery[w.word] = m;
+      var chosenBtn = buttons[index];
+      if (chosenBtn) {
+        chosenBtn.classList.remove('is-correct');
+        chosenBtn.classList.add('is-wrong');
+        var bad = document.createElement('span');
+        bad.className = 'opt-mark';
+        bad.textContent = '你选的';
+        chosenBtn.appendChild(bad);
+      }
+      var gentle = pick(GENTLE);
+      showFeedback(false, gentle.zh + ' 正确答案：' + w.word + '（' + (w.pinyin || '') + '）＝ ' + w.meaning, gentle.en);
+      stopSpeech();
+      speak(gentle.zh, 'zh-CN');
+      chime(false);
+      var pos = Math.min(2, state.deck.length);
+      state.deck.splice(pos, 0, w.word);
+    }
+
+    persist();
+    updatePlayMeta();
+    renderPreview();
+    try { $('feedback').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* ignore */ }
+    $('next-btn').hidden = false;
+    try { $('next-btn').focus({ preventScroll: true }); } catch (e) { /* 旧浏览器忽略 */ }
+  }
+
+  function finishRound() {
+    $('play-area').hidden = true;
+    var box = $('round-summary');
+    box.hidden = false;
+    var acc = state.sessionAttempts ? Math.round(state.sessionCorrect / state.sessionAttempts * 100) : 0;
+    $('sum-acc').textContent = acc + '%';
+    $('sum-stars').textContent = String(state.stars);
+    $('sum-best').textContent = String(state.bestCombo);
+    var hits = Object.keys(state.roundHits).length;
+    var mastered = 0;
+    state.words.forEach(function (w) { if (masteryOf(w.word).c >= 2) { mastered++; } });
+    var rest = state.words.length - hits;
+    if (!state.sessionAttempts) {
+      $('sum-lead').textContent = '这一轮还没有作答就结束了。下次抽几张卡试试，答错的词会自己回来。';
+    } else if (acc >= 85) {
+      $('sum-lead').textContent = '这一轮答得很稳：' + state.sessionAttempts + ' 次作答里答对 ' + state.sessionCorrect + ' 次，' + hits + ' 个词过关。再来一轮，答对第二次的词就会进入「已掌握」。';
+    } else if (acc >= 60) {
+      $('sum-lead').textContent = '这一轮有 ' + hits + ' 个词过关，还有 ' + rest + ' 个词在牌堆里等你。再抽一轮，它们会更熟。';
+    } else {
+      $('sum-lead').textContent = '这一轮有点难，但你已经见过它们了：' + hits + ' 个词过关，剩下的 ' + rest + ' 个再抽一次就好。';
+    }
+    var q = pick(QUOTES);
+    $('sum-quote').textContent = q.zh;
+    $('sum-quote-src').textContent = '—— ' + q.src;
+    $('sum-quote-en').textContent = q.en + '（英文意译）';
+    speak(q.zh, 'zh-CN');
+  }
+
+  function startGame() {
+    var parsed = parseWords($('word-input').value);
+    if (parsed.words.length < 2) {
+      setStatus('至少需要 2 个词才能开始抽卡。', 'bad');
+      showView('view-setup');
+      return;
+    }
+    state.words = parsed.words;
+    var ordered = shuffle(state.words).sort(function (a, b) {
+      return masteryOf(a.word).c - masteryOf(b.word).c;
+    });
+    state.deck = ordered.map(function (w) { return w.word; });
+    state.stars = 0;
+    state.combo = 0;
+    state.bestCombo = 0;
+    state.drawn = 0;
+    state.sessionCorrect = 0;
+    state.sessionAttempts = 0;
+    state.sinceQuote = 0;
+    state.roundHits = {};
+    state.current = null;
+    state.answered = false;
+    $('round-summary').hidden = true;
+    $('play-empty').hidden = true;
+    $('play-area').hidden = false;
+    persist();
+    showView('view-play');
+    nextCard();
+  }
+
+  function renderCollection() {
+    var parsed = parseWords($('word-input').value);
+    var grid = $('collection-grid');
+    grid.textContent = '';
+    $('col-empty').hidden = parsed.words.length > 0;
+    if (!parsed.words.length) { return; }
+    parsed.words.forEach(function (w) {
+      var m = masteryOf(w.word);
+      var card = document.createElement('article');
+      card.className = 'mini' + (m.c >= 2 ? ' is-mastered' : '');
+
+      var title = document.createElement('h3');
+      title.textContent = w.word;
+      title.lang = 'zh-Hans';
+
+      var py = document.createElement('p');
+      py.className = 'mini-pinyin';
+      py.textContent = w.pinyin || '—';
+
+      var mean = document.createElement('p');
+      mean.className = 'mini-meaning';
+      mean.textContent = w.meaning;
+
+      var pips = document.createElement('div');
+      pips.className = 'pips';
+      pips.setAttribute('aria-hidden', 'true');
+      for (var i = 0; i < 2; i++) {
+        var pip = document.createElement('span');
+        pip.className = 'pip' + (i < m.c ? ' on' : '');
+        pips.appendChild(pip);
+      }
+
+      var status = document.createElement('p');
+      status.className = 'hint';
+      status.textContent = m.c >= 2 ? '已掌握' : (m.c === 1 ? '在学 · 还差 1 次' : '新卡');
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'speak-btn';
+      btn.setAttribute('aria-label', '朗读 ' + w.word);
+      btn.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4z" fill="currentColor"></path><path d="M16.4 8.6a5 5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M19 6.2a8.4 8.4 0 0 1 0 11.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span>听发音</span>';
+      btn.addEventListener('click', function () { stopSpeech(); speak(w.word, 'zh-CN', Math.max(0.6, state.rate * 0.9)); });
+
+      card.appendChild(title);
+      card.appendChild(py);
+      card.appendChild(mean);
+      card.appendChild(pips);
+      card.appendChild(status);
+      card.appendChild(btn);
+      grid.appendChild(card);
+    });
+  }
+
+  function speakAll() {
+    if (!speechSupported) { return; }
+    if (!state.voiceOn) {
+      var label = $('speak-all');
+      label.textContent = '先在上面打开语音';
+      window.setTimeout(function () { label.textContent = '按顺序朗读全部词语'; }, 1800);
+      return;
+    }
+    var words = parseWords($('word-input').value).words;
+    if (!words.length) { return; }
+    stopSpeech();
+    var i = 0;
+    function step() {
+      if (i >= words.length) { return; }
+      var w = words[i++];
+      var u = makeUtterance(w.word, 'zh-CN', Math.max(0.6, state.rate * 0.9));
+      if (!u) { return; }
+      u.onend = function () { window.setTimeout(step, 340); };
+      try { window.speechSynthesis.speak(u); } catch (e) { return; }
+    }
+    step();
+  }
+
+  function bindEvents() {
+    $('pack-daily').addEventListener('click', function () { $('word-input').value = PACKS.daily; persist(); refreshSetup(); });
+    $('pack-feelings').addEventListener('click', function () { $('word-input').value = PACKS.feelings; persist(); refreshSetup(); });
+    $('pack-growth').addEventListener('click', function () { $('word-input').value = PACKS.growth; persist(); refreshSetup(); });
+
+    $('word-input').addEventListener('input', function () { refreshSetup(); persist(); });
+
+    var radios = document.querySelectorAll('input[name="mode"]');
+    Array.prototype.forEach.call(radios, function (r) {
+      r.addEventListener('change', function () {
+        if (r.checked) { state.mode = r.value; persist(); }
+      });
+    });
+
+    $('voice-toggle').addEventListener('change', function () {
+      state.voiceOn = $('voice-toggle').checked;
+      if (!state.voiceOn) { stopSpeech(); }
+      persist();
+    });
+
+    $('rate').addEventListener('input', function () {
+      state.rate = parseFloat($('rate').value) || 1;
+      $('rate-out').textContent = state.rate.toFixed(1) + '×';
+      persist();
+    });
+
+    $('start-btn').addEventListener('click', startGame);
+    $('again-btn').addEventListener('click', startGame);
+    $('next-btn').addEventListener('click', nextCard);
+    $('speak-word').addEventListener('click', speakWord);
+    $('speak-all').addEventListener('click', speakAll);
+    $('quit-btn').addEventListener('click', finishRound);
+
+    document.addEventListener('keydown', function (event) {
+      if ($('view-play').hidden) { return; }
+      var tag = event.target && event.target.tagName ? event.target.tagName : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') { return; }
+      if (!state.answered) {
+        var n = parseInt(event.key, 10);
+        if (n >= 1 && n <= state.options.length) {
+          event.preventDefault();
+          var btn = $('options').querySelectorAll('.opt')[n - 1];
+          if (btn) { btn.click(); }
+        }
+      } else if (event.key === 'Enter') {
+        if (event.target === $('next-btn')) { return; }
+        if (!$('next-btn').hidden) {
+          event.preventDefault();
+          nextCard();
+        }
+      }
+    });
+
+    window.addEventListener('hashchange', function () {
+      var id = window.location.hash.replace('#', '');
+      var el = id ? document.getElementById(id) : null;
+      if (el && el.className.indexOf('view') !== -1) { showView(id); }
+    });
+  }
+
+  function init() {
+    $('word-input').value = (typeof saved.custom === 'string' && saved.custom.trim()) ? saved.custom : PACKS.daily;
+    state.totalStars = (typeof saved.totalStars === 'number' && saved.totalStars >= 0) ? Math.round(saved.totalStars) : 0;
+    state.voiceOn = saved.voiceOn !== false;
+    $('voice-toggle').checked = state.voiceOn;
+    if (typeof saved.rate === 'number' && saved.rate >= 0.6 && saved.rate <= 1.3) { state.rate = saved.rate; }
+    $('rate').value = String(state.rate);
+    $('rate-out').textContent = state.rate.toFixed(1) + '×';
+    if (saved.mode === 'listen' || saved.mode === 'meaning') { state.mode = saved.mode; }
+    var checked = document.querySelector('input[name="mode"][value="' + state.mode + '"]');
+    if (checked) { checked.checked = true; }
+
+    if (!speechSupported) {
+      $('voice-toggle').checked = false;
+      $('voice-toggle').disabled = true;
+      state.voiceOn = false;
+      $('voice-note').textContent = '这个浏览器不支持语音合成，游戏仍可正常玩：鼓励语和名言会以文字显示。';
+      $('speak-word').disabled = true;
+      $('speak-all').disabled = true;
+    } else {
+      pickVoices();
+      if (typeof window.speechSynthesis.addEventListener === 'function') {
+        window.speechSynthesis.addEventListener('voiceschanged', pickVoices);
+      } else {
+        window.speechSynthesis.onvoiceschanged = pickVoices;
+      }
+      window.setTimeout(function () {
+        pickVoices();
+        if (!voices.zh) {
+          $('voice-note').textContent = '没有检测到中文语音包，发音可能不准确。在系统设置里添加「中文（普通话）」语音后再回来会更好。文字反馈不受影响。';
+        } else {
+          $('voice-note').textContent = '已使用中文语音「' + voices.zh.name + '」。语音由浏览器本地合成，不联网、不上传内容。';
+        }
+      }, 1200);
+    }
+
+    bindEvents();
+    refreshSetup();
+
+    var initial = window.location.hash.replace('#', '');
+    var initialEl = initial ? document.getElementById(initial) : null;
+    if (initialEl && initialEl.className.indexOf('view') !== -1) {
+      showView(initial);
+    } else {
+      showView('view-setup');
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
